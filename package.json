@@ -15,7 +15,8 @@
     "start": "npm run start --workspaces --if-present",
     "lint": "npm run lint --workspaces --if-present",
     "db:generate": "npm run -w packages/database generate",
-    "db:migrate": "npm run -w packages/database migrate"
+    "db:migrate": "npm run -w packages/database migrate",
+    "postinstall": "npm run db:generate"
   },
   "keywords": [
     "lms",
@@ -29,6 +30,8 @@
   "author": "UniLMS Team",
   "license": "MIT",
   "devDependencies": {
+    "eslint": "^8.57.1",
+    "eslint-config-next": "^14.2.35",
     "prisma": "^6.19.3",
     "typescript": "^5.4.5"
   },

@@ -200,7 +200,7 @@ export default function LoginPage() {
         <p className="text-xs leading-relaxed text-slate-400 font-medium">
           This is a wireframe prototype showcasing the University LMS design.
           <br />
-          Click any role above to explore that role's interface.
+          Click any role above to explore that role&apos;s interface.
         </p>
       </div>
     </div>
