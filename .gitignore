@@ -2,15 +2,24 @@
 node_modules/
 .npm-cache/
 
-# Next.js Build Output
+# Environment Variables
+.env
+.env.local
+.env.development
+.env.production
+
+# Next.js
 .next/
 out/
 
-# NestJS Build Output
+# NestJS
 dist/
 
 # Prisma
-.env
+prisma/generated/
+
+# Logs
+*.log
 
 # OS Files
 .DS_Store
