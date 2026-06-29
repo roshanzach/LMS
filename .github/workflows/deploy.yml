@@ -1,0 +1,49 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  lint-and-test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-node: '20'
+          cache: 'npm'
+
+      - name: Install Workspace Dependencies
+        run: npm ci
+
+      - name: Typecheck shared packages
+        run: npm run build --workspace=packages/types --if-present
+
+      - name: Lint Codebases
+        run: npm run lint --if-present
+
+  deploy-frontend:
+    needs: lint-and-test
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploy Frontend to Vercel
+        run: |
+          echo "Triggering Vercel deployment for apps/web..."
+          # Insert Vercel CLI command here for production builds
+
+  deploy-backend:
+    needs: lint-and-test
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploy Backend to Render
+        run: |
+          echo "Triggering Render webhook deploy for apps/api..."
+          # Insert Render deploy webhook curl here
