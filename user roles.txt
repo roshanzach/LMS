@@ -1,0 +1,167 @@
+Super Admin
+│
+├── College Admin
+│      │
+│      ├── Department Management
+│      │        │
+│      │        └── HOD
+│      │              │
+│      │              ├── Faculty
+│      │              │      │
+│      │              │      ├── Courses
+│      │              │      ├── Attendance
+│      │              │      ├── Assignments
+│      │              │      └── Student Progress
+│      │              │      
+│      │              │
+│      │              └── Class Advisor
+│      │                     │
+│      │                     ├── Attendance Monitoring
+│      │                     ├── Leave Management
+│      │                     └── Performance Tracking
+│      │
+│      └── Students
+│             │
+│             ├── Learning Materials
+│             ├── Assignments
+│             |
+│             ├── Attendance
+│             ├── Discussion Forum
+            
+
+
+
+1. Super Admin
+
+manages the complete LMS platform and all registered colleges.
+
+| Module              | Definition                                                |
+| ------------------- | --------------------------------------------------------- |
+| College Management  | Add, edit, or remove colleges using the LMS.              |
+| Admin Management    | Manage College Admin accounts.                            |
+| User Management     | Monitor user accounts across colleges.  		              |
+| Notifications       | Send global announcements to colleges.                    |
+| Reports & Analytics | View usage statistics and reports.   		                  |
+
+
+2. College Admin
+
+manages all academic and administrative operations within a college.
+
+College Admin
+│
+├── Departments
+├── Faculty
+├── Students
+├── Courses
+├── Academic Calendar
+└── Reports
+
+| Module                | Definition                                                         |
+| --------------------- | ------------------------------------------------------------------ |
+| Department Management | Create and manage academic departments.                            |
+| Faculty Management    | Add, update, and assign faculty members. (Assign - Positions)      |
+| Student Management    | Manage student profiles and enrollments.                           |
+| Semester Management   | Manage academic semesters and batches.                             |
+| Course Management     | Create and assign courses for each semester.                       |
+| Academic Calendar     | Publish important academic schedules and events.                   |
+| Reports               | Generate academic and administrative reports.                      |
+| Announcements         | Share notices with faculty and students.                           |
+  
+
+
+3. HOD
+
+manages departmental activities and monitors faculty performance.
+
+HOD
+│
+├── Faculty
+├── Subjects
+├── Students
+└── Reports
+
+| Module                | Definition                                             |
+| --------------------- | ------------------------------------------------------ |
+| Faculty Management    | Monitor faculty members and class advisor.             |
+| Subject Allocation    | Assign subjects to faculty members.                    |
+| Attendance Monitoring | Monitor attendance of students in the department.      |
+| Assessment Review     | Review internal marks and assessment progress.         |
+| CO-PO Mapping         | Monitor course outcome and program outcome attainment. |
+| Department Reports    | Generate departmental performance reports.             |
+| Announcements         | Publish department-specific notices.                   |
+
+
+4. Faculty
+
+conduct teaching activities and manage student learning.
+
+Faculty
+│
+├── Courses
+├── Attendance
+├── Assignments
+├── Assessments
+├── Students
+
+
+| Module                | Definition                                                             |
+| --------------------- | ---------------------------------------------------------------------- |
+| Assigned subjects     | View and manage assigned subjects.                                     |
+| Course Materials      | Upload notes, presentations, videos, and learning resources.           |
+| Attendance            | review student attendance.                                             |
+| Assignments           | Create and evaluate assignments.                                       |
+| Grade Book            | Record internal marks and grades.                                      |
+| Student Management    | View enrolled students and their academic progress.                    |
+| Discussion Forum      | Answer student questions and facilitate discussions.                   |
+| Reports               | Analyze course progress and student performance.                       |
+  Announcements         | Publish subject-specific notices.
+
+
+5. Class Advisor
+
+monitors the academic progress and well-being of an assigned class.
+
+Class Advisor
+│
+├── Students
+├── Attendance
+├── Leave
+└── Performance
+
+| Module                | Definition                                         |
+| --------------------- | -------------------------------------------------- |
+| Student List          | View all students assigned to the class.           |
+| Attendance Monitoring | Monitor attendance.           		     |
+| Performance Tracking  | Monitor academic performance and internal marks.   |
+| Reports               | Generate class attendance and performance reports. |
+  Announcements         | Publish class-specific notices.
+
+
+
+6. Student
+
+Student
+│
+├── Learning
+├── Assessments
+├── Attendance
+├── Communication
+
+| Module                | Definition                                                                |
+| --------------------- | ------------------------------------------------------------------------- |
+| My Courses            | Access enrolled courses and syllabus.                                     |
+| Learning Materials    | Download notes, presentations, videos, and documents.                     |
+| Assignments           | Submit assignments and view feedback.                                     |
+| Grades                | View internal marks and academic performance.                             |
+| Attendance            | Track attendance percentage and history.                                  |
+| Discussion Forum      | Ask questions and participate in discussions.                             |
+
+
+
+
+
+
+
+
+
