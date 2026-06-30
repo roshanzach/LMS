@@ -1,9 +1,11 @@
 import React from 'react';
+import SuperAdminLayout from './components/SuperAdminLayout';
 
-export default function SuperAdminDashboard() {
-  return (
-    <div className="min-h-screen bg-slate-50 flex flex-col items-center justify-center p-8">
-      <p className="text-slate-500">Dashboard is empty.</p>
-    </div>
-  );
+export const metadata = {
+  title: 'Super Admin Dashboard — UniLMS',
+  description: 'Super Admin control panel for UniLMS platform management',
+};
+
+export default function SuperAdminPage() {
+  return <SuperAdminLayout />;
 }

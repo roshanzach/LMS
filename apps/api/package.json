@@ -10,11 +10,12 @@
   },
   "dependencies": {
     "@nestjs/common": "^10.3.9",
+    "@nestjs/config": "^4.0.4",
     "@nestjs/core": "^10.3.9",
     "@nestjs/platform-express": "^10.3.9",
+    "@unilms/types": "*",
     "reflect-metadata": "^0.2.2",
-    "rxjs": "^7.8.1",
-    "@unilms/types": "*"
+    "rxjs": "^7.8.1"
   },
   "devDependencies": {
     "@nestjs/cli": "^10.3.2",

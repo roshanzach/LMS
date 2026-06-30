@@ -1,4 +1,5 @@
 import { Module } from '@nestjs/common';
+import { ConfigModule } from '@nestjs/config';
 import { AppController } from './app.controller';
 import { PrismaModule } from './prisma/prisma.module';
 import { AuthModule } from './modules/auth/auth.module';
@@ -16,11 +17,14 @@ import { GradesModule } from './modules/grades/grades.module';
 import { ReportsModule } from './modules/reports/reports.module';
 import { ForumsModule } from './modules/forums/forums.module';
 import { LeaveModule } from './modules/leave/leave.module';
+import { SuperAdminModule } from './modules/super-admin/super-admin.module';
 
 @Module({
   imports: [
+    ConfigModule.forRoot({ isGlobal: true, envFilePath: '../../.env' }),
     PrismaModule,
     AuthModule,
+    SuperAdminModule,
     CollegesModule,
     DepartmentsModule,
     CoursesModule,
