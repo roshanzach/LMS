@@ -1,0 +1,15 @@
+{
+  "name": "@unilms/database",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "generate": "prisma generate --schema=schema.prisma",
+    "migrate": "prisma migrate dev --schema=schema.prisma"
+  },
+  "dependencies": {
+    "@prisma/client": "^6.19.3"
+  },
+  "devDependencies": {
+    "prisma": "^6.19.3"
+  }
+}
