@@ -149,13 +149,15 @@ export default function LoginPage() {
 
 
         </form>
-      {/* Wireframe Caption Footer */}
-      <div className="text-center max-w-lg mx-auto mt-6">
-        <p className="text-xs leading-relaxed text-slate-400 font-medium">
-          This is a wireframe prototype showcasing the University LMS design.
-          <br />
-          Click any role above to explore that role&apos;s interface.
-        </p>
+
+        {/* Wireframe Caption Footer */}
+        <div className="text-center max-w-lg mx-auto mt-6">
+          <p className="text-xs leading-relaxed text-slate-400 font-medium">
+            This is a wireframe prototype showcasing the University LMS design.
+            <br />
+            Click any role above to explore that role&apos;s interface.
+          </p>
+        </div>
       </div>
     </div>
   );
