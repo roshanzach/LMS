@@ -48,6 +48,12 @@ export default function LoginPage() {
       }
 
       const data = await response.json();
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('currentUser', JSON.stringify({
+          username: data.username,
+          role: data.role
+        }));
+      }
       const route = ROLE_ROUTE_MAP[data.role];
 
       if (route) {

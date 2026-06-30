@@ -1,9 +1,11 @@
 import React from 'react';
+import CollegeAdminLayout from './components/CollegeAdminLayout';
+
+export const metadata = {
+  title: 'College Admin Dashboard — Bharat-LMS',
+  description: 'Bharat-LMS College Admin panel',
+};
 
 export default function CollegeAdminDashboard() {
-  return (
-    <div className="min-h-screen bg-slate-50 flex flex-col items-center justify-center p-8">
-      <p className="text-slate-500">Dashboard is empty.</p>
-    </div>
-  );
+  return <CollegeAdminLayout />;
 }
