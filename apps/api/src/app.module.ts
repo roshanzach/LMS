@@ -18,6 +18,10 @@ import { ReportsModule } from './modules/reports/reports.module';
 import { ForumsModule } from './modules/forums/forums.module';
 import { LeaveModule } from './modules/leave/leave.module';
 import { SuperAdminModule } from './modules/super-admin/super-admin.module';
+import { ProgramsModule } from './modules/programs/programs.module';
+import { SchemesModule } from './modules/schemes/schemes.module';
+import { BatchesModule } from './modules/batches/batches.module';
+import { SemestersModule } from './modules/semesters/semesters.module';
 
 @Module({
   imports: [
@@ -27,6 +31,10 @@ import { SuperAdminModule } from './modules/super-admin/super-admin.module';
     SuperAdminModule,
     CollegesModule,
     DepartmentsModule,
+    ProgramsModule,
+    SchemesModule,
+    BatchesModule,
+    SemestersModule,
     CoursesModule,
     AttendanceModule,
     ObeModule,

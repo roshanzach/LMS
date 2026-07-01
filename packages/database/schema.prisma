@@ -24,7 +24,7 @@ model College {
   code        String       @unique
   departments Department[]
   users       User[]
-  courses     Course[]
+  students    StudentProfile[]
   createdAt   DateTime     @default(now()) @map("created_at")
   updatedAt   DateTime     @updatedAt @map("updated_at")
 
@@ -38,11 +38,13 @@ model Department {
   collegeId   String       @db.Uuid @map("college_id")
   college     College      @relation(fields: [collegeId], references: [id], onDelete: Cascade)
   users       User[]
-  courses     Course[]
+  programs    Program[]
+  deletedAt   DateTime?    @map("deleted_at")
   createdAt   DateTime     @default(now()) @map("created_at")
   updatedAt   DateTime     @updatedAt @map("updated_at")
 
   @@unique([collegeId, code])
+  @@index([collegeId])
   @@map("departments")
 }
 
@@ -76,12 +78,21 @@ model StudentProfile {
   id              String             @id @default(uuid()) @db.Uuid
   userId          String             @unique @db.Uuid @map("user_id")
   user            User               @relation(fields: [userId], references: [id], onDelete: Cascade)
-  enrollmentNo    String             @unique @map("enrollment_no")
-  batchYear       Int                @map("batch_year")
+  enrollmentNo    String             @map("enrollment_no")
   currentSemester Int                @map("current_semester")
   
-  enrollments     CourseEnrollment[]
+  collegeId       String             @db.Uuid @map("college_id")
+  college         College            @relation(fields: [collegeId], references: [id], onDelete: Restrict)
+  batchId         String             @db.Uuid @map("batch_id")
+  batch           Batch              @relation(fields: [batchId], references: [id])
   
+  enrollments     CourseEnrollment[]
+  deletedAt       DateTime?          @map("deleted_at")
+
+  @@unique([collegeId, enrollmentNo])
+  @@index([batchId])
+  @@index([userId])
+  @@index([collegeId])
   @@map("student_profiles")
 }
 
@@ -92,8 +103,6 @@ model FacultyProfile {
   employeeId      String    @unique @map("employee_id")
   designation     String
   
-  coursesTeaching Course[]
-  
   @@map("faculty_profiles")
 }
 
@@ -102,20 +111,21 @@ model Course {
   code           String
   name           String
   credits        Int
-  collegeId      String      @db.Uuid @map("college_id")
-  college        College     @relation(fields: [collegeId], references: [id])
-  departmentId   String      @db.Uuid @map("department_id")
-  department     Department  @relation(fields: [departmentId], references: [id])
+  ltp            String?
+  category       CourseCategory @default(CORE)
+  description    String?     @db.Text
+  isActive       Boolean     @default(true) @map("is_active")
   
-  facultyId      String?     @db.Uuid @map("faculty_id")
-  faculty        FacultyProfile? @relation(fields: [facultyId], references: [id])
-  
+  semesterId     String      @db.Uuid @map("semester_id")
+  semester       Semester    @relation(fields: [semesterId], references: [id], onDelete: Cascade)
+
   enrollments    CourseEnrollment[]
-  
+  deletedAt      DateTime?   @map("deleted_at")
   createdAt      DateTime    @default(now()) @map("created_at")
   updatedAt      DateTime    @updatedAt @map("updated_at")
 
-  @@unique([collegeId, code])
+  @@unique([semesterId, code])
+  @@index([semesterId])
   @@map("courses")
 }
 
@@ -129,4 +139,121 @@ model CourseEnrollment {
   
   @@unique([studentId, courseId])
   @@map("course_enrollments")
+}
+
+enum DegreeType {
+  BTECH
+  MTECH
+  MCA
+}
+
+enum CourseCategory {
+  CORE
+  PROFESSIONAL_ELECTIVE
+  OPEN_ELECTIVE
+  LAB
+  MINI_PROJECT
+  MAJOR_PROJECT
+  SEMINAR
+  INTERNSHIP
+  MINOR
+  HONORS
+}
+
+model Program {
+  id             String       @id @default(uuid()) @db.Uuid
+  name           String       // e.g. "B.Tech Computer Science & Engineering"
+  code           String       // e.g. "BTECH-CSE"
+  degreeType     DegreeType   @map("degree_type")
+  duration       Int          // in Years
+  totalSemesters Int          @map("total_semesters")
+  isActive       Boolean      @default(true) @map("is_active")
+
+  departmentId   String       @db.Uuid @map("department_id")
+  department     Department   @relation(fields: [departmentId], references: [id], onDelete: Cascade)
+
+  batches        Batch[]
+  schemes        Scheme[]
+  deletedAt      DateTime?    @map("deleted_at")
+
+  createdAt      DateTime     @default(now()) @map("created_at")
+  updatedAt      DateTime     @updatedAt @map("updated_at")
+
+  @@unique([departmentId, code])
+  @@index([departmentId])
+  @@map("programs")
+}
+
+model Scheme {
+  id            String       @id @default(uuid()) @db.Uuid
+  name          String       // e.g. "KTU B.Tech 2024"
+  university    String       @default("KTU")
+  effectiveYear Int          @map("effective_year")
+  isActive      Boolean      @default(true) @map("is_active")
+
+  programId     String       @db.Uuid @map("program_id")
+  program       Program      @relation(fields: [programId], references: [id], onDelete: Cascade)
+
+  batches       Batch[]
+  semesters     Semester[]
+  deletedAt     DateTime?    @map("deleted_at")
+
+  createdAt     DateTime     @default(now()) @map("created_at")
+  updatedAt     DateTime     @updatedAt @map("updated_at")
+
+  @@unique([programId, name])
+  @@unique([id, programId]) // Needed for composite foreign key constraint in Batch
+  @@index([programId])
+  @@map("schemes")
+}
+
+model Batch {
+  id           String       @id @default(uuid()) @db.Uuid
+  name         String       // e.g. "2024–2028"
+  startYear    Int          @map("start_year")
+  endYear      Int          @map("end_year")
+  isActive     Boolean      @default(true) @map("is_active")
+  status       BatchStatus  @default(ACTIVE)
+
+  programId    String       @db.Uuid @map("program_id")
+  program      Program      @relation(fields: [programId], references: [id], onDelete: Cascade)
+
+  schemeId     String       @db.Uuid @map("scheme_id")
+  scheme       Scheme       @relation(fields: [schemeId, programId], references: [id, programId], onDelete: Cascade)
+
+  students     StudentProfile[]
+  deletedAt    DateTime?    @map("deleted_at")
+
+  createdAt    DateTime     @default(now()) @map("created_at")
+  updatedAt    DateTime     @updatedAt @map("updated_at")
+
+  @@unique([programId, startYear])
+  @@index([programId])
+  @@index([schemeId])
+  @@map("batches")
+}
+
+model Semester {
+  id             String       @id @default(uuid()) @db.Uuid
+  semesterNumber Int          @map("semester_number") // 1 to 8
+  name           String       // e.g. "Semester 1"
+
+  schemeId       String       @db.Uuid @map("scheme_id")
+  scheme         Scheme       @relation(fields: [schemeId], references: [id], onDelete: Cascade)
+
+  courses        Course[]
+
+  createdAt      DateTime     @default(now()) @map("created_at")
+  updatedAt      DateTime     @updatedAt @map("updated_at")
+
+  @@unique([schemeId, semesterNumber])
+  @@index([schemeId])
+  @@map("semesters")
+}
+
+enum BatchStatus {
+  UPCOMING
+  ACTIVE
+  GRADUATED
+  ARCHIVED
 }

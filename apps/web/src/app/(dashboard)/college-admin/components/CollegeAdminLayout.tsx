@@ -16,18 +16,28 @@ import {
   LogOut,
   CheckCircle2,
   X,
+  Building2,
+  BookOpen,
+  Layers,
 } from 'lucide-react';
 import DashboardHome from './DashboardHome';
 import PlaceholderView from './PlaceholderView';
 import AddStudentModal from './AddStudentModal';
 import AddFacultyModal from './AddFacultyModal';
 import AddCourseModal from './AddCourseModal';
+import DepartmentManagement from './DepartmentManagement';
+import ProgramManagement from './ProgramManagement';
+import SchemeManagement from './SchemeManagement';
+import BatchManagement from './BatchManagement';
 
 type ActiveView =
   | 'overview'
+  | 'dept-mgmt'
+  | 'program-mgmt'
+  | 'scheme-mgmt'
+  | 'batch-mgmt'
   | 'faculty-mgmt'
-  | 'student-insights'
-  | 'obe-reports'
+  | 'student-mgmt'
   | 'settings'
   | 'support';
 
@@ -40,23 +50,38 @@ interface NavItem {
 const MENU_ITEMS: NavItem[] = [
   {
     id: 'overview',
-    label: 'Departmental Overview',
+    label: 'Dashboard',
     icon: <LayoutDashboard className="w-5 h-5" />,
   },
   {
+    id: 'dept-mgmt',
+    label: 'Departments',
+    icon: <Building2 className="w-5 h-5" />,
+  },
+  {
+    id: 'program-mgmt',
+    label: 'Programs',
+    icon: <BookOpen className="w-5 h-5" />,
+  },
+  {
+    id: 'scheme-mgmt',
+    label: 'Schemes & Regulations',
+    icon: <Layers className="w-5 h-5" />,
+  },
+  {
+    id: 'batch-mgmt',
+    label: 'Batches',
+    icon: <Grid className="w-5 h-5" />,
+  },
+  {
     id: 'faculty-mgmt',
-    label: 'Faculty Management',
+    label: 'Faculty',
     icon: <Users className="w-5 h-5" />,
   },
   {
-    id: 'student-insights',
-    label: 'Student Insights',
-    icon: <BarChart3 className="w-5 h-5" />,
-  },
-  {
-    id: 'obe-reports',
-    label: 'Accreditation (OBE) Reports',
-    icon: <FileCheck className="w-5 h-5" />,
+    id: 'student-mgmt',
+    label: 'Students',
+    icon: <Users className="w-5 h-5" />,
   },
 ];
 
@@ -72,23 +97,28 @@ export default function CollegeAdminLayout() {
   React.useEffect(() => {
     if (typeof window !== 'undefined') {
       const stored = localStorage.getItem('currentUser');
-      if (stored) {
-        try {
-          const user = JSON.parse(stored);
-          if (user?.username) {
-            const capitalized = user.username.charAt(0).toUpperCase() + user.username.slice(1);
-            setUsername(capitalized);
-            
-            // Generate 2-character initials
-            const chars = user.username.slice(0, 2).toUpperCase();
-            setInitials(chars);
-          }
-        } catch (e) {
-          console.error('Error parsing user details', e);
+      if (!stored) {
+        router.push('/login');
+        return;
+      }
+      try {
+        const user = JSON.parse(stored);
+        if (user?.role !== 'COLLEGE_ADMIN') {
+          router.push('/login');
+          return;
         }
+        if (user?.username) {
+          const capitalized = user.username.charAt(0).toUpperCase() + user.username.slice(1);
+          setUsername(capitalized);
+          const chars = user.username.slice(0, 2).toUpperCase();
+          setInitials(chars);
+        }
+      } catch (e) {
+        console.error('Error parsing user details', e);
+        router.push('/login');
       }
     }
-  }, []);
+  }, [router]);
 
   const handleLogout = () => {
     if (typeof window !== 'undefined') {
@@ -276,9 +306,12 @@ export default function CollegeAdminLayout() {
         {/* Dynamic Inner Page Screen */}
         <main className="flex-1 overflow-y-auto">
           {activeView === 'overview' && <DashboardHome onOpenModal={setActiveModal} />}
+          {activeView === 'dept-mgmt' && <DepartmentManagement />}
+          {activeView === 'program-mgmt' && <ProgramManagement />}
+          {activeView === 'scheme-mgmt' && <SchemeManagement />}
+          {activeView === 'batch-mgmt' && <BatchManagement />}
           {activeView === 'faculty-mgmt' && <PlaceholderView title="Faculty Management" />}
-          {activeView === 'student-insights' && <PlaceholderView title="Student Insights" />}
-          {activeView === 'obe-reports' && <PlaceholderView title="Accreditation (OBE) Reports" />}
+          {activeView === 'student-mgmt' && <PlaceholderView title="Student Management" />}
           {activeView === 'settings' && <PlaceholderView title="Settings" />}
           {activeView === 'support' && <PlaceholderView title="Support" />}
         </main>

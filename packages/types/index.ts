@@ -17,14 +17,30 @@ export interface User {
   updatedAt: Date;
 }
 
+export type DegreeType = 'BTECH' | 'MTECH' | 'MCA';
+
+export type CourseCategory =
+  | 'CORE'
+  | 'PROFESSIONAL_ELECTIVE'
+  | 'OPEN_ELECTIVE'
+  | 'LAB'
+  | 'MINI_PROJECT'
+  | 'MAJOR_PROJECT'
+  | 'SEMINAR'
+  | 'INTERNSHIP'
+  | 'MINOR'
+  | 'HONORS';
+
 export interface Course {
   id: string;
   code: string; // e.g., CS8501
   name: string; // e.g., Theory of Computation
-  departmentId: string;
   credits: number;
-  semester: number;
-  academicYear: string;
+  ltp?: string;
+  category?: CourseCategory;
+  description?: string;
+  semesterId: string;
+  isActive: boolean;
 }
 
 export interface CourseOutcome {
@@ -47,4 +63,57 @@ export interface COPOMapping {
   courseOutcomeId: string;
   programOutcomeId: string;
   mappingStrength: 1 | 2 | 3; // 1: Low, 2: Medium, 3: High mapping correlation
+}
+
+export interface Program {
+  id: string;
+  name: string;
+  code: string;
+  degreeType: DegreeType;
+  duration: number;
+  totalSemesters: number;
+  isActive: boolean;
+  departmentId: string;
+  createdAt?: Date;
+  updatedAt?: Date;
+}
+
+export interface Scheme {
+  id: string;
+  name: string;
+  university: string;
+  effectiveYear: number;
+  isActive: boolean;
+  programId: string;
+  createdAt?: Date;
+  updatedAt?: Date;
+}
+
+export interface Batch {
+  id: string;
+  name: string;
+  startYear: number;
+  endYear: number;
+  isActive: boolean;
+  programId: string;
+  schemeId: string;
+  createdAt?: Date;
+  updatedAt?: Date;
+}
+
+export interface Semester {
+  id: string;
+  semesterNumber: number;
+  name: string;
+  schemeId: string;
+  createdAt?: Date;
+  updatedAt?: Date;
+}
+
+export interface StudentProfile {
+  id: string;
+  userId: string;
+  enrollmentNo: string;
+  currentSemester: number;
+  batchId: string;
 }
