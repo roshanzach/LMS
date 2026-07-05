@@ -19,6 +19,9 @@ import {
   Building2,
   BookOpen,
   Layers,
+  Calendar,
+  Megaphone,
+  GraduationCap,
 } from 'lucide-react';
 import DashboardHome from './DashboardHome';
 import PlaceholderView from './PlaceholderView';
@@ -32,12 +35,10 @@ import BatchManagement from './BatchManagement';
 
 type ActiveView =
   | 'overview'
-  | 'dept-mgmt'
-  | 'program-mgmt'
-  | 'scheme-mgmt'
-  | 'batch-mgmt'
-  | 'faculty-mgmt'
-  | 'student-mgmt'
+  | 'departments'
+  | 'schemes'
+  | 'faculty'
+  | 'students'
   | 'settings'
   | 'support';
 
@@ -54,34 +55,24 @@ const MENU_ITEMS: NavItem[] = [
     icon: <LayoutDashboard className="w-5 h-5" />,
   },
   {
-    id: 'dept-mgmt',
+    id: 'departments',
     label: 'Departments',
     icon: <Building2 className="w-5 h-5" />,
   },
   {
-    id: 'program-mgmt',
-    label: 'Programs',
-    icon: <BookOpen className="w-5 h-5" />,
-  },
-  {
-    id: 'scheme-mgmt',
+    id: 'schemes',
     label: 'Schemes & Regulations',
     icon: <Layers className="w-5 h-5" />,
   },
   {
-    id: 'batch-mgmt',
-    label: 'Batches',
-    icon: <Grid className="w-5 h-5" />,
-  },
-  {
-    id: 'faculty-mgmt',
+    id: 'faculty',
     label: 'Faculty',
     icon: <Users className="w-5 h-5" />,
   },
   {
-    id: 'student-mgmt',
+    id: 'students',
     label: 'Students',
-    icon: <Users className="w-5 h-5" />,
+    icon: <GraduationCap className="w-5 h-5" />,
   },
 ];
 
@@ -306,12 +297,10 @@ export default function CollegeAdminLayout() {
         {/* Dynamic Inner Page Screen */}
         <main className="flex-1 overflow-y-auto">
           {activeView === 'overview' && <DashboardHome onOpenModal={setActiveModal} />}
-          {activeView === 'dept-mgmt' && <DepartmentManagement />}
-          {activeView === 'program-mgmt' && <ProgramManagement />}
-          {activeView === 'scheme-mgmt' && <SchemeManagement />}
-          {activeView === 'batch-mgmt' && <BatchManagement />}
-          {activeView === 'faculty-mgmt' && <PlaceholderView title="Faculty Management" />}
-          {activeView === 'student-mgmt' && <PlaceholderView title="Student Management" />}
+          {activeView === 'departments' && <DepartmentManagement />}
+          {activeView === 'schemes' && <SchemeManagement />}
+          {activeView === 'faculty' && <PlaceholderView title="Faculty Management" />}
+          {activeView === 'students' && <PlaceholderView title="Student Management" />}
           {activeView === 'settings' && <PlaceholderView title="Settings" />}
           {activeView === 'support' && <PlaceholderView title="Support" />}
         </main>

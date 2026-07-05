@@ -20,6 +20,7 @@ class CreateProgramDto {
   degreeType: DegreeType;
   duration: number;
   departmentId: string;
+  totalSemesters?: number;
 }
 
 class UpdateProgramDto {
@@ -28,6 +29,7 @@ class UpdateProgramDto {
   degreeType?: DegreeType;
   duration?: number;
   isActive?: boolean;
+  totalSemesters?: number;
 }
 
 @Controller('college-admin/programs')

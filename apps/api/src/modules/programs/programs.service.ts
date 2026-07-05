@@ -15,6 +15,9 @@ export class ProgramsService {
       where: whereClause,
       include: {
         department: true,
+        _count: {
+          select: { schemes: true }
+        }
       },
       orderBy: { createdAt: 'desc' },
     });
@@ -39,6 +42,7 @@ export class ProgramsService {
     degreeType: DegreeType;
     duration: number;
     departmentId: string;
+    totalSemesters?: number;
   }) {
     const dept = await this.prisma.department.findFirst({
       where: { id: data.departmentId, deletedAt: null },
@@ -47,11 +51,14 @@ export class ProgramsService {
       throw new BadRequestException(`Department with ID ${data.departmentId} not found`);
     }
 
-    let totalSemesters = data.duration * 2;
-    if (data.degreeType === 'BTECH') {
-      totalSemesters = 8;
-    } else if (data.degreeType === 'MTECH' || data.degreeType === 'MCA') {
-      totalSemesters = 4;
+    let totalSemesters = data.totalSemesters;
+    if (!totalSemesters) {
+      totalSemesters = data.duration * 2;
+      if (data.degreeType === 'BTECH') {
+        totalSemesters = 8;
+      } else if (data.degreeType === 'MTECH' || data.degreeType === 'MCA') {
+        totalSemesters = 4;
+      }
     }
 
     const existing = await this.prisma.program.findFirst({
@@ -86,6 +93,7 @@ export class ProgramsService {
       degreeType?: DegreeType;
       duration?: number;
       isActive?: boolean;
+      totalSemesters?: number;
     },
   ) {
     const program = await this.prisma.program.findFirst({
@@ -98,6 +106,7 @@ export class ProgramsService {
     const updatedData: any = {};
     if (data.name !== undefined) updatedData.name = data.name;
     if (data.isActive !== undefined) updatedData.isActive = data.isActive;
+    if (data.totalSemesters !== undefined) updatedData.totalSemesters = data.totalSemesters;
 
     if (data.code !== undefined) {
       const codeUpper = data.code.toUpperCase();
@@ -117,7 +126,7 @@ export class ProgramsService {
       updatedData.code = codeUpper;
     }
 
-    if (data.duration || data.degreeType) {
+    if ((data.duration || data.degreeType) && data.totalSemesters === undefined) {
       const finalDuration = data.duration ?? program.duration;
       const finalDegreeType = data.degreeType ?? program.degreeType;
       
@@ -129,9 +138,10 @@ export class ProgramsService {
       }
       
       updatedData.totalSemesters = totalSemesters;
-      updatedData.duration = finalDuration;
-      updatedData.degreeType = finalDegreeType;
     }
+
+    if (data.duration !== undefined) updatedData.duration = data.duration;
+    if (data.degreeType !== undefined) updatedData.degreeType = data.degreeType;
 
     return this.prisma.program.update({
       where: { id },

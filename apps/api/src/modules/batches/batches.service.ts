@@ -45,6 +45,7 @@ export class BatchesService {
     endYear: number;
     programId: string;
     schemeId: string;
+    classroom?: string;
   }) {
     const program = await this.prisma.program.findFirst({
       where: { id: data.programId, deletedAt: null },
@@ -82,6 +83,7 @@ export class BatchesService {
         endYear: data.endYear,
         programId: data.programId,
         schemeId: data.schemeId,
+        classroom: data.classroom,
         status: BatchStatus.ACTIVE,
         isActive: true,
       },
@@ -97,6 +99,7 @@ export class BatchesService {
       schemeId?: string;
       status?: BatchStatus;
       isActive?: boolean;
+      classroom?: string;
     },
   ) {
     const batch = await this.prisma.batch.findFirst({
@@ -112,6 +115,7 @@ export class BatchesService {
     if (data.endYear !== undefined) updatePayload.endYear = data.endYear;
     if (data.status !== undefined) updatePayload.status = data.status;
     if (data.isActive !== undefined) updatePayload.isActive = data.isActive;
+    if (data.classroom !== undefined) updatePayload.classroom = data.classroom;
 
     if (data.schemeId !== undefined) {
       const scheme = await this.prisma.scheme.findFirst({
@@ -143,6 +147,35 @@ export class BatchesService {
     return this.prisma.batch.update({
       where: { id },
       data: { deletedAt: new Date() },
+    });
+  }
+
+  async listCalendarEvents(batchId: string, semesterNumber: number) {
+    return this.prisma.academicCalendar.findMany({
+      where: { batchId, semesterNumber },
+      orderBy: { date: 'asc' },
+    });
+  }
+
+  async addCalendarEvent(
+    batchId: string,
+    semesterNumber: number,
+    data: { title: string; date: string; type: string },
+  ) {
+    return this.prisma.academicCalendar.create({
+      data: {
+        batchId,
+        semesterNumber,
+        title: data.title,
+        date: data.date,
+        type: data.type,
+      },
+    });
+  }
+
+  async deleteCalendarEvent(id: string) {
+    return this.prisma.academicCalendar.delete({
+      where: { id },
     });
   }
 }

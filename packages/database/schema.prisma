@@ -212,6 +212,7 @@ model Batch {
   name         String       // e.g. "2024–2028"
   startYear    Int          @map("start_year")
   endYear      Int          @map("end_year")
+  classroom    String?      @map("classroom")
   isActive     Boolean      @default(true) @map("is_active")
   status       BatchStatus  @default(ACTIVE)
 
@@ -223,6 +224,7 @@ model Batch {
 
   students     StudentProfile[]
   deletedAt    DateTime?    @map("deleted_at")
+  academicCalendars AcademicCalendar[]
 
   createdAt    DateTime     @default(now()) @map("created_at")
   updatedAt    DateTime     @updatedAt @map("updated_at")
@@ -231,6 +233,20 @@ model Batch {
   @@index([programId])
   @@index([schemeId])
   @@map("batches")
+}
+
+model AcademicCalendar {
+  id             String   @id @default(uuid()) @db.Uuid
+  batchId        String   @db.Uuid @map("batch_id")
+  batch          Batch    @relation(fields: [batchId], references: [id], onDelete: Cascade)
+  semesterNumber Int      @map("semester_number")
+  title          String
+  date           String   // e.g. "2026-07-15"
+  type           String   // e.g. "EXAM", "HOLIDAY", "EVENT"
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
+
+  @@map("academic_calendars")
 }
 
 model Semester {

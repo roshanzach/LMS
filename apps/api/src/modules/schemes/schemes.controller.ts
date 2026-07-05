@@ -42,6 +42,12 @@ export class SchemesController {
     return this.schemesService.getScheme(id);
   }
 
+  @Get(':id/semesters')
+  async getSemesters(@Param('id') id: string) {
+    const scheme = await this.schemesService.getScheme(id);
+    return scheme.semesters;
+  }
+
   @Post()
   async create(@Body() body: CreateSchemeDto) {
     if (!body.name || !body.university || !body.effectiveYear || !body.programId) {

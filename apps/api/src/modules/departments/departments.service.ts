@@ -12,6 +12,11 @@ export class DepartmentsService {
     }
     return this.prisma.department.findMany({
       where: whereClause,
+      include: {
+        _count: {
+          select: { programs: true }
+        }
+      },
       orderBy: { name: 'asc' },
     });
   }

@@ -20,6 +20,7 @@ class CreateBatchDto {
   endYear: number;
   programId: string;
   schemeId: string;
+  classroom?: string;
 }
 
 class UpdateBatchDto {
@@ -29,6 +30,7 @@ class UpdateBatchDto {
   schemeId?: string;
   status?: BatchStatus;
   isActive?: boolean;
+  classroom?: string;
 }
 
 @Controller('college-admin/batches')
@@ -62,5 +64,30 @@ export class BatchesController {
   @Delete(':id')
   async delete(@Param('id') id: string) {
     return this.batchesService.softDeleteBatch(id);
+  }
+
+  @Get(':id/semesters/:semNo/calendar')
+  async listCalendar(
+    @Param('id') batchId: string,
+    @Param('semNo') semNo: string,
+  ) {
+    return this.batchesService.listCalendarEvents(batchId, parseInt(semNo));
+  }
+
+  @Post(':id/semesters/:semNo/calendar')
+  async addCalendar(
+    @Param('id') batchId: string,
+    @Param('semNo') semNo: string,
+    @Body() body: { title: string; date: string; type: string },
+  ) {
+    if (!body.title || !body.date || !body.type) {
+      throw new BadRequestException('All fields (title, date, type) are required');
+    }
+    return this.batchesService.addCalendarEvent(batchId, parseInt(semNo), body);
+  }
+
+  @Delete('calendar/:calId')
+  async deleteCalendar(@Param('calId') calId: string) {
+    return this.batchesService.deleteCalendarEvent(calId);
   }
 }

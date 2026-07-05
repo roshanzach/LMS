@@ -18,7 +18,12 @@ export class SchemesService {
             department: true,
           },
         },
-        semesters: { orderBy: { semesterNumber: 'asc' } },
+        semesters: {
+          include: {
+            courses: { where: { deletedAt: null } }
+          },
+          orderBy: { semesterNumber: 'asc' }
+        },
       },
       orderBy: { createdAt: 'desc' },
     });
@@ -29,7 +34,12 @@ export class SchemesService {
       where: { id, deletedAt: null },
       include: {
         program: true,
-        semesters: { orderBy: { semesterNumber: 'asc' } },
+        semesters: {
+          include: {
+            courses: { where: { deletedAt: null } }
+          },
+          orderBy: { semesterNumber: 'asc' }
+        },
       },
     });
     if (!scheme) {
