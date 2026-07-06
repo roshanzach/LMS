@@ -100,13 +100,26 @@ export default function SchemeManagement() {
   const [isSubmittingCourse, setIsSubmittingCourse] = useState(false);
   const [courseSubmitError, setCourseSubmitError] = useState<string | null>(null);
 
+  const getAuthHeaders = () => {
+    let headers: Record<string, string> = { 'x-user-role': 'COLLEGE_ADMIN' };
+    if (typeof window !== 'undefined') {
+      const userStr = localStorage.getItem('currentUser');
+      if (userStr) {
+        const user = JSON.parse(userStr);
+        headers['x-user-role'] = user.role;
+        if (user.username) headers['x-username'] = user.username;
+      }
+    }
+    return headers;
+  };
+
   const fetchData = async () => {
     setIsLoading(true);
     setError(null);
     try {
       const [schemesRes, progRes] = await Promise.all([
-        fetch(`${API_BASE}/college-admin/schemes`, { headers: { 'x-user-role': 'COLLEGE_ADMIN' } }),
-        fetch(`${API_BASE}/college-admin/programs`, { headers: { 'x-user-role': 'COLLEGE_ADMIN' } }),
+        fetch(`${API_BASE}/college-admin/schemes`, { headers: getAuthHeaders() }),
+        fetch(`${API_BASE}/college-admin/programs`, { headers: getAuthHeaders() }),
       ]);
 
       if (!schemesRes.ok || !progRes.ok) {
@@ -132,7 +145,7 @@ export default function SchemeManagement() {
     setIsLoadingSemesters(true);
     try {
       const res = await fetch(`${API_BASE}/college-admin/schemes/${schemeId}/semesters`, {
-        headers: { 'x-user-role': 'COLLEGE_ADMIN' }
+        headers: getAuthHeaders()
       });
       if (!res.ok) throw new Error('Failed to load semesters');
       const data = await res.json();
@@ -209,7 +222,7 @@ export default function SchemeManagement() {
         method,
         headers: { 
           'Content-Type': 'application/json',
-          'x-user-role': 'COLLEGE_ADMIN'
+          ...getAuthHeaders()
         },
         body: JSON.stringify(payload),
       });
@@ -234,7 +247,7 @@ export default function SchemeManagement() {
         method: 'PATCH',
         headers: { 
           'Content-Type': 'application/json',
-          'x-user-role': 'COLLEGE_ADMIN'
+          ...getAuthHeaders()
         },
         body: JSON.stringify({ isActive: !sch.isActive }),
       });
@@ -261,7 +274,7 @@ export default function SchemeManagement() {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'x-user-role': 'COLLEGE_ADMIN',
+          ...getAuthHeaders(),
         },
         body: JSON.stringify({
           name: courseName.trim(),
@@ -300,7 +313,7 @@ export default function SchemeManagement() {
     try {
       const res = await fetch(`${API_BASE}/college-admin/courses/${courseId}`, {
         method: 'DELETE',
-        headers: { 'x-user-role': 'COLLEGE_ADMIN' },
+        headers: getAuthHeaders(),
       });
       if (!res.ok) throw new Error('Failed to delete course');
       await fetchSemestersOfScheme(selectedSchemeForSemesters.id);

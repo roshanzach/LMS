@@ -5,10 +5,13 @@ import { PrismaService } from '../../prisma/prisma.service';
 export class SchemesService {
   constructor(private readonly prisma: PrismaService) {}
 
-  async listSchemes(programId?: string) {
+  async listSchemes(programId?: string, collegeId?: string) {
     let whereClause: any = { deletedAt: null };
     if (programId) {
       whereClause.programId = programId;
+    }
+    if (collegeId) {
+      whereClause.collegeId = collegeId;
     }
     return this.prisma.scheme.findMany({
       where: whereClause,
@@ -29,9 +32,13 @@ export class SchemesService {
     });
   }
 
-  async getScheme(id: string) {
+  async getScheme(id: string, collegeId?: string) {
+    let whereClause: any = { id, deletedAt: null };
+    if (collegeId) {
+      whereClause.collegeId = collegeId;
+    }
     const scheme = await this.prisma.scheme.findFirst({
-      where: { id, deletedAt: null },
+      where: whereClause,
       include: {
         program: true,
         semesters: {
@@ -53,9 +60,13 @@ export class SchemesService {
     university: string;
     effectiveYear: number;
     programId: string;
-  }) {
+  }, collegeId?: string) {
+    let programWhere: any = { id: data.programId, deletedAt: null };
+    if (collegeId) {
+      programWhere.collegeId = collegeId;
+    }
     const program = await this.prisma.program.findFirst({
-      where: { id: data.programId, deletedAt: null },
+      where: programWhere,
     });
     if (!program) {
       throw new BadRequestException(`Program with ID ${data.programId} not found`);
@@ -79,6 +90,7 @@ export class SchemesService {
           university: data.university.trim(),
           effectiveYear: data.effectiveYear,
           programId: data.programId,
+          collegeId: program.collegeId || collegeId,
           isActive: true,
         },
       });
@@ -105,9 +117,14 @@ export class SchemesService {
       effectiveYear?: number;
       isActive?: boolean;
     },
+    collegeId?: string,
   ) {
+    let whereClause: any = { id, deletedAt: null };
+    if (collegeId) {
+      whereClause.collegeId = collegeId;
+    }
     const scheme = await this.prisma.scheme.findFirst({
-      where: { id, deletedAt: null },
+      where: whereClause,
       include: { program: true },
     });
     if (!scheme) {
@@ -143,9 +160,13 @@ export class SchemesService {
     });
   }
 
-  async softDeleteScheme(id: string) {
+  async softDeleteScheme(id: string, collegeId?: string) {
+    let whereClause: any = { id, deletedAt: null };
+    if (collegeId) {
+      whereClause.collegeId = collegeId;
+    }
     const scheme = await this.prisma.scheme.findFirst({
-      where: { id, deletedAt: null },
+      where: whereClause,
     });
     if (!scheme) {
       throw new NotFoundException(`Scheme with ID ${id} not found`);

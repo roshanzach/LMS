@@ -10,6 +10,8 @@ interface CollegeAdmin {
   username: string;
   createdAt: string;
   isActive: boolean;
+  collegeName?: string;
+  collegeCode?: string;
 }
 
 // ─── Add College Admin Modal ────────────────────────────────────────────────
@@ -22,6 +24,8 @@ interface AddAdminModalProps {
 function AddAdminModal({ onClose, onSuccess }: AddAdminModalProps) {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
+  const [collegeName, setCollegeName] = useState('');
+  const [collegeCode, setCollegeCode] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -45,7 +49,12 @@ function AddAdminModal({ onClose, onSuccess }: AddAdminModalProps) {
       const response = await fetch(`${API_BASE}/super-admin/college-admins`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username: username.trim(), password }),
+        body: JSON.stringify({
+          username: username.trim(),
+          password,
+          collegeName: collegeName.trim() || undefined,
+          collegeCode: collegeCode.trim() || undefined,
+        }),
       });
 
       const data = await response.json().catch(() => ({}));
@@ -145,6 +154,36 @@ function AddAdminModal({ onClose, onSuccess }: AddAdminModalProps) {
                 {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
               </button>
             </div>
+          </div>
+
+          {/* College Name */}
+          <div className="space-y-1.5">
+            <label htmlFor="college-name" className="block text-sm font-semibold text-slate-800">
+              College Name (Optional)
+            </label>
+            <input
+              id="college-name"
+              type="text"
+              value={collegeName}
+              onChange={(e) => setCollegeName(e.target.value)}
+              placeholder="e.g. XYZ Engineering College"
+              className="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition duration-150 text-sm"
+            />
+          </div>
+
+          {/* College Code */}
+          <div className="space-y-1.5">
+            <label htmlFor="college-code" className="block text-sm font-semibold text-slate-800">
+              College Code (Optional)
+            </label>
+            <input
+              id="college-code"
+              type="text"
+              value={collegeCode}
+              onChange={(e) => setCollegeCode(e.target.value)}
+              placeholder="e.g. XYZ-01"
+              className="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition duration-150 text-sm"
+            />
           </div>
 
           {/* Actions */}
@@ -290,6 +329,12 @@ export default function CollegeAdminManagement() {
                     Username
                   </th>
                   <th className="text-left px-5 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider">
+                    College Name
+                  </th>
+                  <th className="text-left px-5 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider">
+                    College Code
+                  </th>
+                  <th className="text-left px-5 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider">
                     Created Date
                   </th>
                   <th className="text-left px-5 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider">
@@ -310,6 +355,12 @@ export default function CollegeAdminManagement() {
                         </div>
                         <span className="font-semibold text-slate-800">{admin.username}</span>
                       </div>
+                    </td>
+                    <td className="px-5 py-3.5 text-slate-700 font-medium">{admin.collegeName || '—'}</td>
+                    <td className="px-5 py-3.5">
+                      <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-bold bg-slate-100 text-slate-600">
+                        {admin.collegeCode || '—'}
+                      </span>
                     </td>
                     <td className="px-5 py-3.5 text-slate-500">{formatDate(admin.createdAt)}</td>
                     <td className="px-5 py-3.5">

@@ -47,6 +47,19 @@ export default function BatchManagement() {
   const [error, setError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
 
+  const getAuthHeaders = () => {
+    let headers: Record<string, string> = { 'x-user-role': 'COLLEGE_ADMIN' };
+    if (typeof window !== 'undefined') {
+      const userStr = localStorage.getItem('currentUser');
+      if (userStr) {
+        const user = JSON.parse(userStr);
+        headers['x-user-role'] = user.role;
+        if (user.username) headers['x-username'] = user.username;
+      }
+    }
+    return headers;
+  };
+
   // Modals
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingBatch, setEditingBatch] = useState<Batch | null>(null);
@@ -67,9 +80,9 @@ export default function BatchManagement() {
     setError(null);
     try {
       const [batchesRes, progRes, schemesRes] = await Promise.all([
-        fetch(`${API_BASE}/college-admin/batches`, { headers: { 'x-user-role': 'COLLEGE_ADMIN' } }),
-        fetch(`${API_BASE}/college-admin/programs`, { headers: { 'x-user-role': 'COLLEGE_ADMIN' } }),
-        fetch(`${API_BASE}/college-admin/schemes`, { headers: { 'x-user-role': 'COLLEGE_ADMIN' } }),
+        fetch(`${API_BASE}/college-admin/batches`, { headers: getAuthHeaders() }),
+        fetch(`${API_BASE}/college-admin/programs`, { headers: getAuthHeaders() }),
+        fetch(`${API_BASE}/college-admin/schemes`, { headers: getAuthHeaders() }),
       ]);
 
       if (!batchesRes.ok || !progRes.ok || !schemesRes.ok) {
@@ -161,7 +174,7 @@ export default function BatchManagement() {
         method,
         headers: { 
           'Content-Type': 'application/json',
-          'x-user-role': 'COLLEGE_ADMIN'
+          ...getAuthHeaders()
         },
         body: JSON.stringify(payload),
       });
@@ -187,7 +200,7 @@ export default function BatchManagement() {
         method: 'PATCH',
         headers: { 
           'Content-Type': 'application/json',
-          'x-user-role': 'COLLEGE_ADMIN'
+          ...getAuthHeaders()
         },
         body: JSON.stringify({ status: 'ARCHIVED' }),
       });
@@ -214,7 +227,7 @@ export default function BatchManagement() {
             Batch Management
           </h2>
           <p className="text-slate-500 text-sm mt-1">
-            Configure academic cohorts, align regulations, and track graduation lifecycles.
+            Configure academic batches, align regulations, and track graduation lifecycles.
           </p>
         </div>
         <button

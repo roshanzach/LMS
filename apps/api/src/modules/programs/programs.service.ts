@@ -6,10 +6,13 @@ import { DegreeType } from '@prisma/client';
 export class ProgramsService {
   constructor(private readonly prisma: PrismaService) {}
 
-  async listPrograms(departmentId?: string) {
+  async listPrograms(departmentId?: string, collegeId?: string) {
     let whereClause: any = { deletedAt: null };
     if (departmentId) {
       whereClause.departmentId = departmentId;
+    }
+    if (collegeId) {
+      whereClause.collegeId = collegeId;
     }
     return this.prisma.program.findMany({
       where: whereClause,
@@ -23,9 +26,13 @@ export class ProgramsService {
     });
   }
 
-  async getProgram(id: string) {
+  async getProgram(id: string, collegeId?: string) {
+    let whereClause: any = { id, deletedAt: null };
+    if (collegeId) {
+      whereClause.collegeId = collegeId;
+    }
     const program = await this.prisma.program.findFirst({
-      where: { id, deletedAt: null },
+      where: whereClause,
       include: {
         department: true,
       },
@@ -43,9 +50,13 @@ export class ProgramsService {
     duration: number;
     departmentId: string;
     totalSemesters?: number;
-  }) {
+  }, collegeId?: string) {
+    let deptWhere: any = { id: data.departmentId, deletedAt: null };
+    if (collegeId) {
+      deptWhere.collegeId = collegeId;
+    }
     const dept = await this.prisma.department.findFirst({
-      where: { id: data.departmentId, deletedAt: null },
+      where: deptWhere,
     });
     if (!dept) {
       throw new BadRequestException(`Department with ID ${data.departmentId} not found`);
@@ -80,6 +91,7 @@ export class ProgramsService {
         duration: data.duration,
         totalSemesters,
         departmentId: data.departmentId,
+        collegeId: dept.collegeId || collegeId,
         isActive: true,
       },
     });
@@ -95,9 +107,14 @@ export class ProgramsService {
       isActive?: boolean;
       totalSemesters?: number;
     },
+    collegeId?: string,
   ) {
+    let whereClause: any = { id, deletedAt: null };
+    if (collegeId) {
+      whereClause.collegeId = collegeId;
+    }
     const program = await this.prisma.program.findFirst({
-      where: { id, deletedAt: null },
+      where: whereClause,
     });
     if (!program) {
       throw new NotFoundException(`Program with ID ${id} not found`);
@@ -149,9 +166,13 @@ export class ProgramsService {
     });
   }
 
-  async softDeleteProgram(id: string) {
+  async softDeleteProgram(id: string, collegeId?: string) {
+    let whereClause: any = { id, deletedAt: null };
+    if (collegeId) {
+      whereClause.collegeId = collegeId;
+    }
     const program = await this.prisma.program.findFirst({
-      where: { id, deletedAt: null },
+      where: whereClause,
     });
     if (!program) {
       throw new NotFoundException(`Program with ID ${id} not found`);

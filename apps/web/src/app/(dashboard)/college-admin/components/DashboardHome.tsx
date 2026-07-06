@@ -11,22 +11,50 @@ import {
   CheckCircle,
   Clock,
   ChevronRight,
+  Sparkles,
+  ArrowRight,
+  BookOpen,
+  Layers,
+  Building2,
 } from 'lucide-react';
 
 interface DashboardHomeProps {
   onOpenModal: (type: 'student' | 'faculty' | 'course') => void;
+  onNavigate?: (tab: string) => void;
 }
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:4000/api';
 
-export default function DashboardHome({ onOpenModal }: DashboardHomeProps) {
+export default function DashboardHome({ onOpenModal, onNavigate }: DashboardHomeProps) {
   const [username, setUsername] = useState('Admin');
+  const [collegeName, setCollegeName] = useState('');
   const [metrics, setMetrics] = useState({
     students: 1240,
     faculty: 84,
     attendance: '92.4%',
     fees: '₹12.8L',
   });
+
+  const [counts, setCounts] = useState({
+    departments: 0,
+    programs: 0,
+    schemes: 0,
+    batches: 0,
+  });
+  const [loadingCounts, setLoadingCounts] = useState(true);
+
+  const getAuthHeaders = () => {
+    let headers: Record<string, string> = { 'x-user-role': 'COLLEGE_ADMIN' };
+    if (typeof window !== 'undefined') {
+      const userStr = localStorage.getItem('currentUser');
+      if (userStr) {
+        const user = JSON.parse(userStr);
+        headers['x-user-role'] = user.role;
+        if (user.username) headers['x-username'] = user.username;
+      }
+    }
+    return headers;
+  };
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -38,24 +66,159 @@ export default function DashboardHome({ onOpenModal }: DashboardHomeProps) {
             const capitalized = user.username.charAt(0).toUpperCase() + user.username.slice(1);
             setUsername(capitalized);
           }
+          if (user?.collegeName) {
+            setCollegeName(user.collegeName);
+          }
         } catch (e) {
           console.error('Error parsing user info', e);
         }
       }
     }
+
+    // Fetch counts for onboarding checklist
+    const fetchCounts = async () => {
+      try {
+        const [depRes, progRes, schRes, batRes] = await Promise.all([
+          fetch(`${API_BASE}/college-admin/departments`, { headers: getAuthHeaders() }),
+          fetch(`${API_BASE}/college-admin/programs`, { headers: getAuthHeaders() }),
+          fetch(`${API_BASE}/college-admin/schemes`, { headers: getAuthHeaders() }),
+          fetch(`${API_BASE}/college-admin/batches`, { headers: getAuthHeaders() }),
+        ]);
+
+        if (depRes.ok && progRes.ok && schRes.ok && batRes.ok) {
+          const deps = await depRes.json();
+          const progs = await progRes.json();
+          const schs = await schRes.json();
+          const bats = await batRes.json();
+          setCounts({
+            departments: deps.length || 0,
+            programs: progs.length || 0,
+            schemes: schs.length || 0,
+            batches: bats.length || 0,
+          });
+        }
+      } catch (err) {
+        console.error('Failed to fetch stats for onboarding', err);
+      } finally {
+        setLoadingCounts(false);
+      }
+    };
+
+    fetchCounts();
   }, []);
+
+  const steps = [
+    {
+      title: '1. Create Departments',
+      desc: 'Set up your college departments (e.g., CSE, ECE).',
+      done: counts.departments > 0,
+      icon: Building2,
+      tab: 'departments',
+    },
+    {
+      title: '2. Create Programs',
+      desc: 'Add degree programs under departments (e.g., B.Tech CSE).',
+      done: counts.programs > 0,
+      icon: GraduationCap,
+      tab: 'departments',
+    },
+    {
+      title: '3. Configure Schemes',
+      desc: 'Define university regulations and curriculum structures.',
+      done: counts.schemes > 0,
+      icon: Layers,
+      tab: 'departments',
+    },
+    {
+      title: '4. Register Batches',
+      desc: 'Create admission batches (e.g., 2024–2028 Batch).',
+      done: counts.batches > 0,
+      icon: BookOpen,
+      tab: 'batches',
+    },
+  ];
+
+  const allStepsDone = steps.every((s) => s.done);
 
   return (
     <div className="p-6 md:p-8 space-y-8 animate-in fade-in duration-200">
       {/* Welcome Heading */}
-      <div className="space-y-1">
-        <h2 className="text-2xl md:text-3xl font-extrabold text-slate-900 tracking-tight">
-          Welcome back, {username}
-        </h2>
-        <p className="text-slate-500 text-sm font-medium">
-          Here is the institutional overview for the current academic session.
-        </p>
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div className="space-y-1">
+          <div className="flex items-center gap-3">
+            <h2 className="text-2xl md:text-3xl font-extrabold text-slate-900 tracking-tight">
+              Welcome back, {username}
+            </h2>
+            {collegeName && (
+              <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-indigo-50 text-indigo-700 border border-indigo-200/60 shadow-sm">
+                <Building2 className="w-3.5 h-3.5 mr-1.5 text-indigo-500" />
+                {collegeName}
+              </span>
+            )}
+          </div>
+          <p className="text-slate-500 text-sm font-medium">
+            Here is the institutional overview for {collegeName || 'your college workspace'}.
+          </p>
+        </div>
       </div>
+
+      {/* Getting Started / Onboarding Guide Card */}
+      {!loadingCounts && !allStepsDone && (
+        <div className="bg-gradient-to-br from-blue-900 via-indigo-900 to-slate-900 rounded-3xl p-6 md:p-8 text-white shadow-xl relative overflow-hidden">
+          <div className="absolute -right-10 -top-10 w-48 h-48 bg-blue-500/10 rounded-full blur-2xl pointer-events-none" />
+          <div className="relative z-10 space-y-6">
+            <div className="flex items-center gap-2.5">
+              <div className="p-2 rounded-xl bg-blue-500/20 border border-blue-400/30 text-blue-300">
+                <Sparkles className="w-5 h-5 animate-pulse" />
+              </div>
+              <div>
+                <h3 className="text-lg font-black tracking-tight">Getting Started with Your College Setup</h3>
+                <p className="text-xs text-blue-200 font-medium">Follow this sequence to structure your institutional data without missing dependencies.</p>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 pt-2">
+              {steps.map((step, idx) => {
+                const Icon = step.icon;
+                return (
+                  <div
+                    key={idx}
+                    onClick={() => onNavigate && onNavigate(step.tab)}
+                    className={`p-4 rounded-2xl border transition-all duration-200 flex flex-col justify-between ${
+                      step.done
+                        ? 'bg-emerald-950/30 border-emerald-500/30 text-emerald-100'
+                        : 'bg-white/5 border-white/10 hover:bg-white/10 hover:border-white/20 cursor-pointer text-white'
+                    }`}
+                  >
+                    <div className="space-y-2">
+                      <div className="flex items-center justify-between">
+                        <Icon className={`w-5 h-5 ${step.done ? 'text-emerald-400' : 'text-blue-300'}`} />
+                        {step.done ? (
+                          <span className="inline-flex items-center gap-1 text-[10px] font-bold bg-emerald-500/20 text-emerald-300 px-2 py-0.5 rounded-full">
+                            <CheckCircle className="w-3 h-3" /> Completed
+                          </span>
+                        ) : (
+                          <span className="text-[10px] font-bold bg-blue-500/20 text-blue-200 px-2 py-0.5 rounded-full">
+                            Step {idx + 1}
+                          </span>
+                        )}
+                      </div>
+                      <h4 className="text-sm font-bold">{step.title}</h4>
+                      <p className="text-xs text-slate-300 leading-relaxed">{step.desc}</p>
+                    </div>
+                    {!step.done && (
+                      <div className="mt-4 pt-3 border-t border-white/10 flex items-center justify-between text-xs font-bold text-blue-300 group">
+                        <span>Go to {step.tab}</span>
+                        <ArrowRight className="w-3.5 h-3.5 transform group-hover:translate-x-1 transition" />
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Action Buttons Row */}
       <div className="flex flex-wrap gap-4 bg-white border border-slate-100 rounded-3xl p-4 shadow-sm max-w-xl">

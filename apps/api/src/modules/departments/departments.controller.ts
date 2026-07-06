@@ -12,11 +12,11 @@ import {
 } from '@nestjs/common';
 import { DepartmentsService } from './departments.service';
 import { CollegeAdminGuard } from '../../common/guards/college-admin.guard';
+import { CurrentCollege } from '../../common/decorators/current-college.decorator';
 
 class CreateDepartmentDto {
   name: string;
   code: string;
-  collegeId: string;
 }
 
 class UpdateDepartmentDto {
@@ -30,35 +30,35 @@ export class DepartmentsController {
   constructor(private readonly departmentsService: DepartmentsService) {}
 
   @Get()
-  async list(@Query('collegeId') collegeId?: string) {
+  async list(@CurrentCollege() reqCollegeId: string | undefined, @Query('collegeId') queryCollegeId?: string) {
+    const collegeId = reqCollegeId ?? queryCollegeId;
     return this.departmentsService.listDepartments(collegeId);
   }
 
   @Get(':id')
-  async get(@Param('id') id: string) {
-    return this.departmentsService.getDepartment(id);
+  async get(@Param('id') id: string, @CurrentCollege() collegeId?: string) {
+    return this.departmentsService.getDepartment(id, collegeId);
   }
 
   @Post()
-  async create(@Body() body: CreateDepartmentDto) {
-    if (!body.name || !body.code || !body.collegeId) {
-      throw new BadRequestException('All fields (name, code, collegeId) are required');
+  async create(@Body() body: CreateDepartmentDto, @CurrentCollege() reqCollegeId?: string) {
+    if (!body.name || !body.code) {
+      throw new BadRequestException('Fields (name, code) are required');
     }
-    return this.departmentsService.createDepartment(body);
+    const collegeId = reqCollegeId;
+    if (!collegeId) {
+      throw new BadRequestException('collegeId is required from context');
+    }
+    return this.departmentsService.createDepartment({ ...body, collegeId });
   }
 
   @Patch(':id')
-  async update(@Param('id') id: string, @Body() body: UpdateDepartmentDto) {
-    return this.departmentsService.updateDepartment(id, body);
+  async update(@Param('id') id: string, @Body() body: UpdateDepartmentDto, @CurrentCollege() collegeId?: string) {
+    return this.departmentsService.updateDepartment(id, body, collegeId);
   }
 
   @Delete(':id')
-  async delete(@Param('id') id: string) {
-    return this.departmentsService.softDeleteDepartment(id);
-  }
-
-  @Post('test-setup')
-  async testSetup() {
-    return this.departmentsService.createTestCollege();
+  async delete(@Param('id') id: string, @CurrentCollege() collegeId?: string) {
+    return this.departmentsService.softDeleteDepartment(id, collegeId);
   }
 }

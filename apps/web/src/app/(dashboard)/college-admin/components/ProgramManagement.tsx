@@ -51,13 +51,26 @@ export default function ProgramManagement() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
 
+  const getAuthHeaders = () => {
+    let headers: Record<string, string> = { 'x-user-role': 'COLLEGE_ADMIN' };
+    if (typeof window !== 'undefined') {
+      const userStr = localStorage.getItem('currentUser');
+      if (userStr) {
+        const user = JSON.parse(userStr);
+        headers['x-user-role'] = user.role;
+        if (user.username) headers['x-username'] = user.username;
+      }
+    }
+    return headers;
+  };
+
   const fetchData = async () => {
     setIsLoading(true);
     setError(null);
     try {
       const [programsRes, deptsRes] = await Promise.all([
-        fetch(`${API_BASE}/college-admin/programs`, { headers: { 'x-user-role': 'COLLEGE_ADMIN' } }),
-        fetch(`${API_BASE}/college-admin/departments`, { headers: { 'x-user-role': 'COLLEGE_ADMIN' } }),
+        fetch(`${API_BASE}/college-admin/programs`, { headers: getAuthHeaders() }),
+        fetch(`${API_BASE}/college-admin/departments`, { headers: getAuthHeaders() }),
       ]);
       
       if (!programsRes.ok || !deptsRes.ok) throw new Error('Failed to fetch programs or departments.');
@@ -141,7 +154,7 @@ export default function ProgramManagement() {
         method,
         headers: { 
           'Content-Type': 'application/json',
-          'x-user-role': 'COLLEGE_ADMIN'
+          ...getAuthHeaders()
         },
         body: JSON.stringify(payload),
       });
@@ -166,7 +179,7 @@ export default function ProgramManagement() {
         method: 'PATCH',
         headers: { 
           'Content-Type': 'application/json',
-          'x-user-role': 'COLLEGE_ADMIN'
+          ...getAuthHeaders()
         },
         body: JSON.stringify({ isActive: !prog.isActive }),
       });
@@ -182,7 +195,7 @@ export default function ProgramManagement() {
     try {
       const res = await fetch(`${API_BASE}/college-admin/programs/${prog.id}`, {
         method: 'DELETE',
-        headers: { 'x-user-role': 'COLLEGE_ADMIN' }
+        headers: getAuthHeaders()
       });
       if (!res.ok) throw new Error('Failed to deactivate program');
       fetchData();

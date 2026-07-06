@@ -37,6 +37,7 @@ type ActiveView =
   | 'overview'
   | 'departments'
   | 'schemes'
+  | 'batches'
   | 'faculty'
   | 'students'
   | 'settings'
@@ -63,6 +64,11 @@ const MENU_ITEMS: NavItem[] = [
     id: 'schemes',
     label: 'Schemes & Regulations',
     icon: <Layers className="w-5 h-5" />,
+  },
+  {
+    id: 'batches',
+    label: 'Batches',
+    icon: <BookOpen className="w-5 h-5" />,
   },
   {
     id: 'faculty',
@@ -296,9 +302,10 @@ export default function CollegeAdminLayout() {
 
         {/* Dynamic Inner Page Screen */}
         <main className="flex-1 overflow-y-auto">
-          {activeView === 'overview' && <DashboardHome onOpenModal={setActiveModal} />}
+          {activeView === 'overview' && <DashboardHome onOpenModal={setActiveModal} onNavigate={(tab) => setActiveView(tab as any)} />}
           {activeView === 'departments' && <DepartmentManagement />}
           {activeView === 'schemes' && <SchemeManagement />}
+          {activeView === 'batches' && <BatchManagement />}
           {activeView === 'faculty' && <PlaceholderView title="Faculty Management" />}
           {activeView === 'students' && <PlaceholderView title="Student Management" />}
           {activeView === 'settings' && <PlaceholderView title="Settings" />}

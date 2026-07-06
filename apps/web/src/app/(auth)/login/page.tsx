@@ -51,7 +51,9 @@ export default function LoginPage() {
       if (typeof window !== 'undefined') {
         localStorage.setItem('currentUser', JSON.stringify({
           username: data.username,
-          role: data.role
+          role: data.role,
+          collegeId: data.collegeId,
+          collegeName: data.collegeName,
         }));
       }
       const route = ROLE_ROUTE_MAP[data.role];

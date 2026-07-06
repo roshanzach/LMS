@@ -14,9 +14,13 @@ export class CoursesService {
     category?: CourseCategory;
     description?: string;
     semesterId: string;
-  }) {
-    const semester = await this.prisma.semester.findUnique({
-      where: { id: data.semesterId },
+  }, collegeId?: string) {
+    let semWhere: any = { id: data.semesterId };
+    if (collegeId) {
+      semWhere.scheme = { program: { department: { collegeId } } };
+    }
+    const semester = await this.prisma.semester.findFirst({
+      where: semWhere,
     });
     if (!semester) {
       throw new BadRequestException(`Semester with ID ${data.semesterId} not found`);
@@ -48,9 +52,13 @@ export class CoursesService {
     });
   }
 
-  async deleteCourse(id: string) {
+  async deleteCourse(id: string, collegeId?: string) {
+    let whereClause: any = { id, deletedAt: null };
+    if (collegeId) {
+      whereClause.semester = { scheme: { program: { department: { collegeId } } } };
+    }
     const course = await this.prisma.course.findFirst({
-      where: { id, deletedAt: null },
+      where: whereClause,
     });
     if (!course) {
       throw new NotFoundException(`Course with ID ${id} not found`);

@@ -8,6 +8,8 @@ export interface LoginResponseDto {
   role: string;
   username: string;
   message: string;
+  collegeId?: string;
+  collegeName?: string;
 }
 
 @Injectable()
@@ -50,6 +52,16 @@ export class AuthService implements OnModuleInit {
         where: { username: collegeAdminUsername },
       });
       if (!collegeAdmin) {
+        // Provision default college for cekadmin
+        const defaultCollege = await this.prisma.college.upsert({
+          where: { code: 'CEK-001' },
+          update: {},
+          create: {
+            name: 'CEK Engineering College',
+            code: 'CEK-001',
+          },
+        });
+
         await this.prisma.user.create({
           data: {
             username: collegeAdminUsername,
@@ -59,7 +71,7 @@ export class AuthService implements OnModuleInit {
             lastName: 'Admin',
             role: 'COLLEGE_ADMIN',
             isActive: true,
-            collegeId: null,
+            collegeId: defaultCollege.id,
           },
         });
         console.log(`[Seed] Created default college admin user: ${collegeAdminUsername}`);
@@ -88,6 +100,10 @@ export class AuthService implements OnModuleInit {
         passwordHash: true,
         role: true,
         isActive: true,
+        collegeId: true,
+        college: {
+          select: { name: true },
+        },
       },
     });
 
@@ -100,10 +116,33 @@ export class AuthService implements OnModuleInit {
       throw new UnauthorizedException('Invalid credentials');
     }
 
+    let collegeId = user.collegeId ?? undefined;
+    let collegeName = user.college?.name ?? undefined;
+
+    // If College Admin has no college assigned (legacy user), provision one automatically
+    if (user.role === 'COLLEGE_ADMIN' && !collegeId) {
+      const cleanName = user.username ? user.username.trim() : 'Admin';
+      const newCollege = await this.prisma.college.create({
+        data: {
+          name: `${cleanName} College`,
+          code: `${cleanName.toUpperCase()}-COL-${Math.floor(1000 + Math.random() * 9000)}`,
+          createdBy: 'SYSTEM_AUTO',
+        },
+      });
+      await this.prisma.user.update({
+        where: { id: user.id },
+        data: { collegeId: newCollege.id },
+      });
+      collegeId = newCollege.id;
+      collegeName = newCollege.name;
+    }
+
     return {
       role: user.role,
       username: user.username ?? username,
       message: 'Login successful',
+      collegeId,
+      collegeName,
     };
   }
 }

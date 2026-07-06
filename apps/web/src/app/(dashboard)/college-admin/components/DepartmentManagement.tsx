@@ -101,6 +101,19 @@ export default function DepartmentManagement() {
   const [error, setError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
 
+  const getAuthHeaders = () => {
+    let headers: Record<string, string> = { 'x-user-role': 'COLLEGE_ADMIN' };
+    if (typeof window !== 'undefined') {
+      const userStr = localStorage.getItem('currentUser');
+      if (userStr) {
+        const user = JSON.parse(userStr);
+        headers['x-user-role'] = user.role;
+        if (user.username) headers['x-username'] = user.username;
+      }
+    }
+    return headers;
+  };
+
   // ─── DRILL-DOWN PATH STATES ──────────────────────────────────────────
   const [selectedDepartment, setSelectedDepartment] = useState<Department | null>(null);
   const [selectedProgram, setSelectedProgram] = useState<Program | null>(null);
@@ -172,7 +185,7 @@ export default function DepartmentManagement() {
     setError(null);
     try {
       const res = await fetch(`${API_BASE}/college-admin/departments`, {
-        headers: { 'x-user-role': 'COLLEGE_ADMIN' },
+        headers: getAuthHeaders(),
       });
       if (!res.ok) throw new Error('Failed to fetch departments');
       const data = await res.json();
@@ -180,11 +193,11 @@ export default function DepartmentManagement() {
 
       if (data.length > 0) {
         setCollegeId(data[0].collegeId);
-      } else {
-        const setupRes = await fetch(`${API_BASE}/college-admin/departments/test-setup`, { method: 'POST' });
-        if (setupRes.ok) {
-          const defaultCollege = await setupRes.json();
-          setCollegeId(defaultCollege.id);
+      } else if (typeof window !== 'undefined') {
+        const userStr = localStorage.getItem('currentUser');
+        if (userStr) {
+          const user = JSON.parse(userStr);
+          if (user.collegeId) setCollegeId(user.collegeId);
         }
       }
     } catch (err: any) {
@@ -199,7 +212,7 @@ export default function DepartmentManagement() {
     setProgramsError(null);
     try {
       const res = await fetch(`${API_BASE}/college-admin/programs?departmentId=${deptId}`, {
-        headers: { 'x-user-role': 'COLLEGE_ADMIN' },
+        headers: getAuthHeaders(),
       });
       if (!res.ok) throw new Error('Failed to fetch programs');
       const data = await res.json();
@@ -217,14 +230,14 @@ export default function DepartmentManagement() {
     try {
       const [batchesRes, schemesRes] = await Promise.all([
         fetch(`${API_BASE}/college-admin/batches?programId=${progId}`, {
-          headers: { 'x-user-role': 'COLLEGE_ADMIN' },
+          headers: getAuthHeaders(),
         }),
         fetch(`${API_BASE}/college-admin/schemes?programId=${progId}`, {
-          headers: { 'x-user-role': 'COLLEGE_ADMIN' },
+          headers: getAuthHeaders(),
         }),
       ]);
 
-      if (!batchesRes.ok || !schemesRes.ok) throw new Error('Failed to fetch cohort records.');
+      if (!batchesRes.ok || !schemesRes.ok) throw new Error('Failed to fetch batch records.');
 
       const batchesData = await batchesRes.json();
       const schemesData = await schemesRes.json();
@@ -238,7 +251,7 @@ export default function DepartmentManagement() {
         setBatchSchemeId('');
       }
     } catch (err: any) {
-      setBatchesError(err.message ?? 'An error occurred while loading cohort data.');
+      setBatchesError(err.message ?? 'An error occurred while loading batch data.');
     } finally {
       setIsLoadingBatches(false);
     }
@@ -249,7 +262,7 @@ export default function DepartmentManagement() {
     setEventsError(null);
     try {
       const res = await fetch(`${API_BASE}/college-admin/batches/${batchId}/semesters/${semNo}/calendar`, {
-        headers: { 'x-user-role': 'COLLEGE_ADMIN' },
+        headers: getAuthHeaders(),
       });
       if (!res.ok) throw new Error('Failed to load academic calendar events.');
       const data = await res.json();
@@ -342,7 +355,7 @@ export default function DepartmentManagement() {
         method,
         headers: {
           'Content-Type': 'application/json',
-          'x-user-role': 'COLLEGE_ADMIN',
+          ...getAuthHeaders(),
         },
         body: JSON.stringify({
           name: deptName.trim(),
@@ -371,7 +384,7 @@ export default function DepartmentManagement() {
     try {
       const res = await fetch(`${API_BASE}/college-admin/departments/${dept.id}`, {
         method: 'DELETE',
-        headers: { 'x-user-role': 'COLLEGE_ADMIN' },
+        headers: getAuthHeaders(),
       });
       if (!res.ok) throw new Error('Failed to deactivate department');
       fetchDepartments();
@@ -439,7 +452,7 @@ export default function DepartmentManagement() {
         method,
         headers: {
           'Content-Type': 'application/json',
-          'x-user-role': 'COLLEGE_ADMIN',
+          ...getAuthHeaders(),
         },
         body: JSON.stringify(payload),
       });
@@ -466,7 +479,7 @@ export default function DepartmentManagement() {
     try {
       const res = await fetch(`${API_BASE}/college-admin/programs/${prog.id}`, {
         method: 'DELETE',
-        headers: { 'x-user-role': 'COLLEGE_ADMIN' },
+        headers: getAuthHeaders(),
       });
       if (!res.ok) throw new Error('Failed to deactivate program');
       fetchPrograms(selectedDepartment.id);
@@ -483,7 +496,7 @@ export default function DepartmentManagement() {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
-          'x-user-role': 'COLLEGE_ADMIN',
+          ...getAuthHeaders(),
         },
         body: JSON.stringify({ isActive: !prog.isActive }),
       });
@@ -556,7 +569,7 @@ export default function DepartmentManagement() {
         method,
         headers: {
           'Content-Type': 'application/json',
-          'x-user-role': 'COLLEGE_ADMIN',
+          ...getAuthHeaders(),
         },
         body: JSON.stringify(payload),
       });
@@ -584,7 +597,7 @@ export default function DepartmentManagement() {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
-          'x-user-role': 'COLLEGE_ADMIN',
+          ...getAuthHeaders(),
         },
         body: JSON.stringify({ status: 'ARCHIVED' }),
       });
@@ -611,7 +624,7 @@ export default function DepartmentManagement() {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'x-user-role': 'COLLEGE_ADMIN',
+          ...getAuthHeaders(),
         },
         body: JSON.stringify({
           title: calTitle.trim(),
@@ -641,7 +654,7 @@ export default function DepartmentManagement() {
     try {
       const res = await fetch(`${API_BASE}/college-admin/batches/calendar/${eventId}`, {
         method: 'DELETE',
-        headers: { 'x-user-role': 'COLLEGE_ADMIN' },
+        headers: getAuthHeaders(),
       });
       if (!res.ok) throw new Error('Failed to delete event');
       fetchCalendarEvents(selectedBatch.id, selectedSemester);
@@ -766,7 +779,7 @@ export default function DepartmentManagement() {
                 Department & Institutional Config
               </h2>
               <p className="text-slate-500 text-sm mt-1">
-                Create departments and drill down to manage programs, student cohorts, and calendars.
+                Create departments and drill down to manage programs, student batches, and calendars.
               </p>
             </div>
             <button
@@ -855,8 +868,11 @@ export default function DepartmentManagement() {
                           >
                             <Power className="w-3.5 h-3.5" />
                           </button>
-                          <span className="inline-flex pl-2">
-                            <ChevronRight className="w-4 h-4 text-slate-300 group-hover:text-blue-700 transition transform group-hover:translate-x-0.5" />
+                          <span className="inline-flex items-center pl-2 group-hover:bg-blue-50 px-2 py-1 rounded-lg transition-colors">
+                            <span className="text-xs font-bold text-blue-700 opacity-0 group-hover:opacity-100 transition-opacity mr-2 flex items-center animate-pulse">
+                              👆 Click to view Programs
+                            </span>
+                            <ChevronRight className="w-5 h-5 text-slate-300 group-hover:text-blue-700 transition transform group-hover:translate-x-1" />
                           </span>
                         </td>
                       </tr>
@@ -982,8 +998,11 @@ export default function DepartmentManagement() {
                           >
                             <Trash2 className="w-3.5 h-3.5" />
                           </button>
-                          <span className="inline-flex pl-2">
-                            <ChevronRight className="w-4 h-4 text-slate-300 group-hover:text-blue-700 transition transform group-hover:translate-x-0.5" />
+                          <span className="inline-flex items-center pl-2 group-hover:bg-blue-50 px-2 py-1 rounded-lg transition-colors">
+                            <span className="text-xs font-bold text-blue-700 opacity-0 group-hover:opacity-100 transition-opacity mr-2 flex items-center animate-pulse">
+                              👆 Click to view Batches
+                            </span>
+                            <ChevronRight className="w-5 h-5 text-slate-300 group-hover:text-blue-700 transition transform group-hover:translate-x-1" />
                           </span>
                         </td>
                       </tr>
@@ -1008,9 +1027,9 @@ export default function DepartmentManagement() {
                 <ChevronLeft className="w-4 h-4" />
               </button>
               <div>
-                <h2 className="text-2xl font-bold tracking-tight text-slate-900">Batches & Cohorts</h2>
+                <h2 className="text-2xl font-bold tracking-tight text-slate-900">Batches</h2>
                 <p className="text-slate-500 text-sm mt-0.5">
-                  Manage student cohorts and linked syllabus regulations for <strong className="text-slate-700">{selectedProgram.name}</strong>.
+                  Manage student batches and linked syllabus regulations for <strong className="text-slate-700">{selectedProgram.name}</strong>.
                 </p>
               </div>
             </div>
@@ -1046,7 +1065,7 @@ export default function DepartmentManagement() {
             {isLoadingBatches ? (
               <div className="flex flex-col items-center justify-center py-20 gap-3">
                 <Loader2 className="w-6 h-6 text-blue-700 animate-spin" />
-                <span className="text-sm text-slate-500 font-semibold">Loading cohorts...</span>
+                <span className="text-sm text-slate-500 font-semibold">Loading batches...</span>
               </div>
             ) : batchesError ? (
               <div className="flex flex-col items-center justify-center py-20 text-center px-6">
@@ -1113,8 +1132,11 @@ export default function DepartmentManagement() {
                           >
                             <Power className="w-3.5 h-3.5" />
                           </button>
-                          <span className="inline-flex pl-2">
-                            <ChevronRight className="w-4 h-4 text-slate-300 group-hover:text-blue-700 transition transform group-hover:translate-x-0.5" />
+                          <span className="inline-flex items-center pl-2 group-hover:bg-blue-50 px-2 py-1 rounded-lg transition-colors">
+                            <span className="text-xs font-bold text-blue-700 opacity-0 group-hover:opacity-100 transition-opacity mr-2 flex items-center animate-pulse">
+                              👆 Click to view Calendar
+                            </span>
+                            <ChevronRight className="w-5 h-5 text-slate-300 group-hover:text-blue-700 transition transform group-hover:translate-x-1" />
                           </span>
                         </td>
                       </tr>

@@ -22,7 +22,17 @@ model College {
   id          String       @id @default(uuid()) @db.Uuid
   name        String
   code        String       @unique
+  address     String?
+  email       String?
+  phone       String?
+  status      String       @default("ACTIVE")
+  createdBy   String?      @map("created_by")
+
   departments Department[]
+  programs    Program[]
+  schemes     Scheme[]
+  batches     Batch[]
+  faculty     FacultyProfile[]
   users       User[]
   students    StudentProfile[]
   createdAt   DateTime     @default(now()) @map("created_at")
@@ -39,6 +49,7 @@ model Department {
   college     College      @relation(fields: [collegeId], references: [id], onDelete: Cascade)
   users       User[]
   programs    Program[]
+  faculty     FacultyProfile[]
   deletedAt   DateTime?    @map("deleted_at")
   createdAt   DateTime     @default(now()) @map("created_at")
   updatedAt   DateTime     @updatedAt @map("updated_at")
@@ -102,6 +113,11 @@ model FacultyProfile {
   user            User      @relation(fields: [userId], references: [id], onDelete: Cascade)
   employeeId      String    @unique @map("employee_id")
   designation     String
+  
+  collegeId       String?   @db.Uuid @map("college_id")
+  college         College?  @relation(fields: [collegeId], references: [id], onDelete: Cascade)
+  departmentId    String?   @db.Uuid @map("department_id")
+  department      Department? @relation(fields: [departmentId], references: [id])
   
   @@map("faculty_profiles")
 }
@@ -172,6 +188,9 @@ model Program {
   departmentId   String       @db.Uuid @map("department_id")
   department     Department   @relation(fields: [departmentId], references: [id], onDelete: Cascade)
 
+  collegeId      String?      @db.Uuid @map("college_id")
+  college        College?     @relation(fields: [collegeId], references: [id], onDelete: Cascade)
+
   batches        Batch[]
   schemes        Scheme[]
   deletedAt      DateTime?    @map("deleted_at")
@@ -181,6 +200,7 @@ model Program {
 
   @@unique([departmentId, code])
   @@index([departmentId])
+  @@index([collegeId])
   @@map("programs")
 }
 
@@ -194,6 +214,9 @@ model Scheme {
   programId     String       @db.Uuid @map("program_id")
   program       Program      @relation(fields: [programId], references: [id], onDelete: Cascade)
 
+  collegeId     String?      @db.Uuid @map("college_id")
+  college       College?     @relation(fields: [collegeId], references: [id], onDelete: Cascade)
+
   batches       Batch[]
   semesters     Semester[]
   deletedAt     DateTime?    @map("deleted_at")
@@ -204,6 +227,7 @@ model Scheme {
   @@unique([programId, name])
   @@unique([id, programId]) // Needed for composite foreign key constraint in Batch
   @@index([programId])
+  @@index([collegeId])
   @@map("schemes")
 }
 
@@ -222,6 +246,9 @@ model Batch {
   schemeId     String       @db.Uuid @map("scheme_id")
   scheme       Scheme       @relation(fields: [schemeId, programId], references: [id, programId], onDelete: Cascade)
 
+  collegeId    String?      @db.Uuid @map("college_id")
+  college      College?     @relation(fields: [collegeId], references: [id], onDelete: Cascade)
+
   students     StudentProfile[]
   deletedAt    DateTime?    @map("deleted_at")
   academicCalendars AcademicCalendar[]
@@ -232,6 +259,7 @@ model Batch {
   @@unique([programId, startYear])
   @@index([programId])
   @@index([schemeId])
+  @@index([collegeId])
   @@map("batches")
 }
 

@@ -12,6 +12,7 @@ import {
 } from '@nestjs/common';
 import { ProgramsService } from './programs.service';
 import { CollegeAdminGuard } from '../../common/guards/college-admin.guard';
+import { CurrentCollege } from '../../common/decorators/current-college.decorator';
 import { DegreeType } from '@prisma/client';
 
 class CreateProgramDto {
@@ -38,30 +39,30 @@ export class ProgramsController {
   constructor(private readonly programsService: ProgramsService) {}
 
   @Get()
-  async list(@Query('departmentId') departmentId?: string) {
-    return this.programsService.listPrograms(departmentId);
+  async list(@Query('departmentId') departmentId?: string, @CurrentCollege() collegeId?: string) {
+    return this.programsService.listPrograms(departmentId, collegeId);
   }
 
   @Get(':id')
-  async get(@Param('id') id: string) {
-    return this.programsService.getProgram(id);
+  async get(@Param('id') id: string, @CurrentCollege() collegeId?: string) {
+    return this.programsService.getProgram(id, collegeId);
   }
 
   @Post()
-  async create(@Body() body: CreateProgramDto) {
+  async create(@Body() body: CreateProgramDto, @CurrentCollege() collegeId?: string) {
     if (!body.name || !body.code || !body.degreeType || !body.duration || !body.departmentId) {
       throw new BadRequestException('All fields (name, code, degreeType, duration, departmentId) are required');
     }
-    return this.programsService.createProgram(body);
+    return this.programsService.createProgram(body, collegeId);
   }
 
   @Patch(':id')
-  async update(@Param('id') id: string, @Body() body: UpdateProgramDto) {
-    return this.programsService.updateProgram(id, body);
+  async update(@Param('id') id: string, @Body() body: UpdateProgramDto, @CurrentCollege() collegeId?: string) {
+    return this.programsService.updateProgram(id, body, collegeId);
   }
 
   @Delete(':id')
-  async delete(@Param('id') id: string) {
-    return this.programsService.softDeleteProgram(id);
+  async delete(@Param('id') id: string, @CurrentCollege() collegeId?: string) {
+    return this.programsService.softDeleteProgram(id, collegeId);
   }
 }

@@ -6,10 +6,13 @@ import { BatchStatus } from '@prisma/client';
 export class BatchesService {
   constructor(private readonly prisma: PrismaService) {}
 
-  async listBatches(programId?: string) {
+  async listBatches(programId?: string, collegeId?: string) {
     let whereClause: any = { deletedAt: null };
     if (programId) {
       whereClause.programId = programId;
+    }
+    if (collegeId) {
+      whereClause.collegeId = collegeId;
     }
     return this.prisma.batch.findMany({
       where: whereClause,
@@ -25,9 +28,13 @@ export class BatchesService {
     });
   }
 
-  async getBatch(id: string) {
+  async getBatch(id: string, collegeId?: string) {
+    let whereClause: any = { id, deletedAt: null };
+    if (collegeId) {
+      whereClause.collegeId = collegeId;
+    }
     const batch = await this.prisma.batch.findFirst({
-      where: { id, deletedAt: null },
+      where: whereClause,
       include: {
         program: true,
         scheme: true,
@@ -46,9 +53,13 @@ export class BatchesService {
     programId: string;
     schemeId: string;
     classroom?: string;
-  }) {
+  }, collegeId?: string) {
+    let programWhere: any = { id: data.programId, deletedAt: null };
+    if (collegeId) {
+      programWhere.collegeId = collegeId;
+    }
     const program = await this.prisma.program.findFirst({
-      where: { id: data.programId, deletedAt: null },
+      where: programWhere,
     });
     if (!program) {
       throw new BadRequestException(`Program with ID ${data.programId} not found`);
@@ -84,6 +95,7 @@ export class BatchesService {
         programId: data.programId,
         schemeId: data.schemeId,
         classroom: data.classroom,
+        collegeId: program.collegeId || collegeId,
         status: BatchStatus.ACTIVE,
         isActive: true,
       },
@@ -101,9 +113,14 @@ export class BatchesService {
       isActive?: boolean;
       classroom?: string;
     },
+    collegeId?: string,
   ) {
+    let whereClause: any = { id, deletedAt: null };
+    if (collegeId) {
+      whereClause.collegeId = collegeId;
+    }
     const batch = await this.prisma.batch.findFirst({
-      where: { id, deletedAt: null },
+      where: whereClause,
     });
     if (!batch) {
       throw new NotFoundException(`Batch with ID ${id} not found`);
@@ -136,9 +153,13 @@ export class BatchesService {
     });
   }
 
-  async softDeleteBatch(id: string) {
+  async softDeleteBatch(id: string, collegeId?: string) {
+    let whereClause: any = { id, deletedAt: null };
+    if (collegeId) {
+      whereClause.collegeId = collegeId;
+    }
     const batch = await this.prisma.batch.findFirst({
-      where: { id, deletedAt: null },
+      where: whereClause,
     });
     if (!batch) {
       throw new NotFoundException(`Batch with ID ${id} not found`);
@@ -150,9 +171,13 @@ export class BatchesService {
     });
   }
 
-  async listCalendarEvents(batchId: string, semesterNumber: number) {
+  async listCalendarEvents(batchId: string, semesterNumber: number, collegeId?: string) {
+    let whereClause: any = { batchId, semesterNumber };
+    if (collegeId) {
+      whereClause.batch = { collegeId };
+    }
     return this.prisma.academicCalendar.findMany({
-      where: { batchId, semesterNumber },
+      where: whereClause,
       orderBy: { date: 'asc' },
     });
   }
@@ -161,7 +186,18 @@ export class BatchesService {
     batchId: string,
     semesterNumber: number,
     data: { title: string; date: string; type: string },
+    collegeId?: string,
   ) {
+    let whereClause: any = { id: batchId, deletedAt: null };
+    if (collegeId) {
+      whereClause.collegeId = collegeId;
+    }
+    const batch = await this.prisma.batch.findFirst({
+      where: whereClause,
+    });
+    if (!batch) {
+      throw new NotFoundException(`Batch with ID ${batchId} not found`);
+    }
     return this.prisma.academicCalendar.create({
       data: {
         batchId,
@@ -173,7 +209,17 @@ export class BatchesService {
     });
   }
 
-  async deleteCalendarEvent(id: string) {
+  async deleteCalendarEvent(id: string, collegeId?: string) {
+    let whereClause: any = { id };
+    if (collegeId) {
+      whereClause.batch = { collegeId };
+    }
+    const ev = await this.prisma.academicCalendar.findFirst({
+      where: whereClause,
+    });
+    if (!ev) {
+      throw new NotFoundException(`Calendar Event with ID ${id} not found`);
+    }
     return this.prisma.academicCalendar.delete({
       where: { id },
     });

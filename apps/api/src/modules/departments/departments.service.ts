@@ -21,9 +21,12 @@ export class DepartmentsService {
     });
   }
 
-  async getDepartment(id: string) {
+  async getDepartment(id: string, collegeId?: string) {
+    const whereClause: any = { id, deletedAt: null };
+    if (collegeId) whereClause.collegeId = collegeId;
+    
     const dept = await this.prisma.department.findFirst({
-      where: { id, deletedAt: null },
+      where: whereClause,
     });
     if (!dept) {
       throw new NotFoundException(`Department with ID ${id} not found`);
@@ -62,9 +65,13 @@ export class DepartmentsService {
   async updateDepartment(
     id: string,
     data: { name?: string; code?: string; deletedAt?: Date | null },
+    collegeId?: string,
   ) {
+    const whereClause: any = { id, deletedAt: null };
+    if (collegeId) whereClause.collegeId = collegeId;
+
     const dept = await this.prisma.department.findFirst({
-      where: { id, deletedAt: null },
+      where: whereClause,
     });
     if (!dept) {
       throw new NotFoundException(`Department with ID ${id} not found`);
@@ -98,9 +105,12 @@ export class DepartmentsService {
     });
   }
 
-  async softDeleteDepartment(id: string) {
+  async softDeleteDepartment(id: string, collegeId?: string) {
+    const whereClause: any = { id, deletedAt: null };
+    if (collegeId) whereClause.collegeId = collegeId;
+
     const dept = await this.prisma.department.findFirst({
-      where: { id, deletedAt: null },
+      where: whereClause,
     });
     if (!dept) {
       throw new NotFoundException(`Department with ID ${id} not found`);
@@ -109,18 +119,6 @@ export class DepartmentsService {
     return this.prisma.department.update({
       where: { id },
       data: { deletedAt: new Date() },
-    });
-  }
-
-  async createTestCollege() {
-    // Create/Upsert the College record on-demand when requested by the frontend initialization flow
-    return this.prisma.college.upsert({
-      where: { code: 'KTU001' },
-      update: {},
-      create: {
-        name: 'KTU affiliated Engineering College',
-        code: 'KTU001',
-      },
     });
   }
 }
