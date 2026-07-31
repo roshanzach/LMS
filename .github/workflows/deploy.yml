@@ -9,6 +9,7 @@ on:
 jobs:
   lint-and-test:
     runs-on: ubuntu-latest
+
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
@@ -16,8 +17,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
-          cache: 'npm'
+          node-version: '22'
 
       - name: Install Workspace Dependencies
         run: npm ci
@@ -32,6 +32,7 @@ jobs:
     needs: lint-and-test
     if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
+
     steps:
       - name: Deploy Frontend to Vercel
         run: |
@@ -42,9 +43,9 @@ jobs:
     needs: lint-and-test
     if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
+
     steps:
       - name: Deploy Backend to Render
         run: |
           echo "Triggering Render webhook deploy for apps/api..."
           # Insert Render deploy webhook curl here
-          # CI/CD Pipeline
