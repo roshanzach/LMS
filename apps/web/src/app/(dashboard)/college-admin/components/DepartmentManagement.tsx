@@ -54,6 +54,7 @@ interface Scheme {
   name: string;
   university: string;
   programId: string;
+  deletedAt?: string | null;
 }
 
 interface Batch {
@@ -131,6 +132,7 @@ export default function DepartmentManagement() {
   const [isLoadingBatches, setIsLoadingBatches] = useState(false);
   const [batchesError, setBatchesError] = useState<string | null>(null);
   const [batchSearchQuery, setBatchSearchQuery] = useState('');
+  const [showGraduated, setShowGraduated] = useState(false);
   const [allSchemes, setAllSchemes] = useState<Scheme[]>([]);
 
   // Academic Calendar Level State
@@ -241,12 +243,14 @@ export default function DepartmentManagement() {
 
       const batchesData = await batchesRes.json();
       const schemesData = await schemesRes.json();
+      
+      const activeSchemes = schemesData.filter((s: Scheme) => !s.deletedAt);
 
       setBatches(batchesData);
-      setAllSchemes(schemesData);
+      setAllSchemes(activeSchemes);
       
-      if (schemesData.length > 0) {
-        setBatchSchemeId(schemesData[0].id);
+      if (activeSchemes.length > 0) {
+        setBatchSchemeId(activeSchemes[0].id);
       } else {
         setBatchSchemeId('');
       }
@@ -378,18 +382,28 @@ export default function DepartmentManagement() {
     }
   };
 
-  const handleDeactivateDept = async (e: React.MouseEvent, dept: Department) => {
+  const handleToggleDeptStatus = async (e: React.MouseEvent, dept: Department) => {
     e.stopPropagation();
-    if (!confirm(`Are you sure you want to deactivate department "${dept.name}"?`)) return;
+    const action = dept.deletedAt ? 'reactivate' : 'deactivate';
+    if (!confirm(`Are you sure you want to ${action} department "${dept.name}"?`)) return;
     try {
-      const res = await fetch(`${API_BASE}/college-admin/departments/${dept.id}`, {
-        method: 'DELETE',
-        headers: getAuthHeaders(),
-      });
-      if (!res.ok) throw new Error('Failed to deactivate department');
+      if (dept.deletedAt) {
+        const res = await fetch(`${API_BASE}/college-admin/departments/${dept.id}`, {
+          method: 'PATCH',
+          headers: { ...getAuthHeaders(), 'Content-Type': 'application/json' },
+          body: JSON.stringify({ deletedAt: null }),
+        });
+        if (!res.ok) throw new Error('Failed to reactivate department');
+      } else {
+        const res = await fetch(`${API_BASE}/college-admin/departments/${dept.id}`, {
+          method: 'DELETE',
+          headers: getAuthHeaders(),
+        });
+        if (!res.ok) throw new Error('Failed to deactivate department');
+      }
       fetchDepartments();
     } catch (err: any) {
-      alert(err.message ?? 'Failed to deactivate department');
+      alert(err.message ?? `Failed to ${action} department`);
     }
   };
 
@@ -472,20 +486,30 @@ export default function DepartmentManagement() {
     }
   };
 
-  const handleArchiveProg = async (e: React.MouseEvent, prog: Program) => {
+  const handleToggleProgStatus = async (e: React.MouseEvent, prog: Program) => {
     e.stopPropagation();
     if (!selectedDepartment) return;
-    if (!confirm(`Are you sure you want to deactivate program "${prog.name}"?`)) return;
+    const action = prog.deletedAt ? 'reactivate' : 'deactivate';
+    if (!confirm(`Are you sure you want to ${action} program "${prog.name}"?`)) return;
     try {
-      const res = await fetch(`${API_BASE}/college-admin/programs/${prog.id}`, {
-        method: 'DELETE',
-        headers: getAuthHeaders(),
-      });
-      if (!res.ok) throw new Error('Failed to deactivate program');
+      if (prog.deletedAt) {
+        const res = await fetch(`${API_BASE}/college-admin/programs/${prog.id}`, {
+          method: 'PATCH',
+          headers: { ...getAuthHeaders(), 'Content-Type': 'application/json' },
+          body: JSON.stringify({ deletedAt: null }),
+        });
+        if (!res.ok) throw new Error('Failed to reactivate program');
+      } else {
+        const res = await fetch(`${API_BASE}/college-admin/programs/${prog.id}`, {
+          method: 'DELETE',
+          headers: getAuthHeaders(),
+        });
+        if (!res.ok) throw new Error('Failed to deactivate program');
+      }
       fetchPrograms(selectedDepartment.id);
       fetchDepartments();
     } catch (err: any) {
-      alert(err.message ?? 'Failed to deactivate program');
+      alert(err.message ?? `Failed to ${action} program`);
     }
   };
 
@@ -588,25 +612,28 @@ export default function DepartmentManagement() {
     }
   };
 
-  const handleArchiveBatch = async (e: React.MouseEvent, b: Batch) => {
+  const handleToggleBatchStatus = async (e: React.MouseEvent, batch: Batch) => {
     e.stopPropagation();
     if (!selectedProgram) return;
-    if (!confirm(`Are you sure you want to archive batch "${b.name}"?`)) return;
+
     try {
-      const res = await fetch(`${API_BASE}/college-admin/batches/${b.id}`, {
+      const newStatus = batch.status === 'ARCHIVED' ? 'ACTIVE' : 'ARCHIVED';
+      const res = await fetch(`${API_BASE}/college-admin/batches/${batch.id}`, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
           ...getAuthHeaders(),
         },
-        body: JSON.stringify({ status: 'ARCHIVED' }),
+        body: JSON.stringify({ status: newStatus }),
       });
-      if (!res.ok) throw new Error('Failed to archive batch');
+      if (!res.ok) throw new Error(`Failed to ${newStatus === 'ACTIVE' ? 'reactivate' : 'deactivate'} batch`);
       fetchBatchesAndSchemes(selectedProgram.id);
     } catch (err: any) {
-      alert(err.message ?? 'Failed to archive batch');
+      alert(err.message ?? 'Failed to update batch status');
     }
   };
+
+
 
   // Calendar Event CRUD
   const handleAddEvent = async (e: React.FormEvent) => {
@@ -676,11 +703,13 @@ export default function DepartmentManagement() {
       prog.code.toLowerCase().includes(programSearchQuery.toLowerCase())
   );
 
-  const filteredBatches = batches.filter(
-    (b) =>
+  const filteredBatches = batches.filter((b) => {
+    const matchesSearch =
       b.name.toLowerCase().includes(batchSearchQuery.toLowerCase()) ||
-      (b.classroom && b.classroom.toLowerCase().includes(batchSearchQuery.toLowerCase()))
-  );
+      (b.classroom && b.classroom.toLowerCase().includes(batchSearchQuery.toLowerCase()));
+    const matchesGraduated = showGraduated ? true : b.status !== 'GRADUATED';
+    return matchesSearch && matchesGraduated;
+  });
 
   // ─── BREADCRUMB RENDERING ─────────────────────────────────────────────
   const renderBreadcrumbs = () => {
@@ -842,8 +871,14 @@ export default function DepartmentManagement() {
                     {filteredDepts.map((dept) => (
                       <tr
                         key={dept.id}
-                        onClick={() => setSelectedDepartment(dept)}
-                        className="hover:bg-blue-50/20 cursor-pointer transition duration-150 group"
+                        onClick={() => {
+                          if (dept.deletedAt) {
+                            alert('This department is deactivated. Please reactivate it to view its programs.');
+                            return;
+                          }
+                          setSelectedDepartment(dept);
+                        }}
+                        className={`hover:bg-blue-50/20 transition duration-150 group ${dept.deletedAt ? 'cursor-not-allowed opacity-75' : 'cursor-pointer'}`}
                       >
                         <td className="px-6 py-4 text-sm font-bold text-blue-800">{dept.code}</td>
                         <td className="px-6 py-4 text-sm font-semibold text-slate-800">{dept.name}</td>
@@ -853,7 +888,11 @@ export default function DepartmentManagement() {
                           </span>
                         </td>
                         <td className="px-6 py-4 text-xs">
-                          <span className="px-3 py-1 rounded-full font-bold bg-emerald-50 text-emerald-700">Active</span>
+                          {dept.deletedAt ? (
+                            <span className="px-3 py-1 rounded-full font-bold bg-rose-50 text-rose-700">Deactivated</span>
+                          ) : (
+                            <span className="px-3 py-1 rounded-full font-bold bg-emerald-50 text-emerald-700">Active</span>
+                          )}
                         </td>
                         <td className="px-6 py-4 text-sm text-right space-x-2">
                           <button
@@ -863,17 +902,24 @@ export default function DepartmentManagement() {
                             <Edit2 className="w-3.5 h-3.5" />
                           </button>
                           <button
-                            onClick={(e) => handleDeactivateDept(e, dept)}
-                            className="p-1.5 rounded-lg border border-red-50 bg-white hover:bg-red-50 text-red-500 transition inline-flex"
+                            onClick={(e) => handleToggleDeptStatus(e, dept)}
+                            title={dept.deletedAt ? "Reactivate" : "Deactivate"}
+                            className={`p-1.5 rounded-lg border transition inline-flex ${
+                              dept.deletedAt 
+                                ? "border-emerald-50 bg-white hover:bg-emerald-50 text-emerald-600" 
+                                : "border-red-50 bg-white hover:bg-red-50 text-red-500"
+                            }`}
                           >
-                            <Power className="w-3.5 h-3.5" />
+                            {dept.deletedAt ? <RefreshCw className="w-3.5 h-3.5" /> : <Power className="w-3.5 h-3.5" />}
                           </button>
-                          <span className="inline-flex items-center pl-2 group-hover:bg-blue-50 px-2 py-1 rounded-lg transition-colors">
-                            <span className="text-xs font-bold text-blue-700 opacity-0 group-hover:opacity-100 transition-opacity mr-2 flex items-center animate-pulse">
-                              👆 Click to view Programs
+                          {!dept.deletedAt && (
+                            <span className="inline-flex items-center pl-2 group-hover:bg-blue-50 px-2 py-1 rounded-lg transition-colors">
+                              <span className="text-xs font-bold text-blue-700 opacity-0 group-hover:opacity-100 transition-opacity mr-2 flex items-center animate-pulse">
+                                👆 Click to view Programs
+                              </span>
+                              <ChevronRight className="w-5 h-5 text-slate-300 group-hover:text-blue-700 transition transform group-hover:translate-x-1" />
                             </span>
-                            <ChevronRight className="w-5 h-5 text-slate-300 group-hover:text-blue-700 transition transform group-hover:translate-x-1" />
-                          </span>
+                          )}
                         </td>
                       </tr>
                     ))}
@@ -964,8 +1010,14 @@ export default function DepartmentManagement() {
                     {filteredPrograms.map((prog) => (
                       <tr
                         key={prog.id}
-                        onClick={() => setSelectedProgram(prog)}
-                        className="hover:bg-blue-50/20 cursor-pointer transition duration-150 group"
+                        onClick={() => {
+                          if (prog.deletedAt) {
+                            alert('This program is deactivated. Please reactivate it to view its batches.');
+                            return;
+                          }
+                          setSelectedProgram(prog);
+                        }}
+                        className={`hover:bg-blue-50/20 transition duration-150 group ${prog.deletedAt ? 'cursor-not-allowed opacity-75' : 'cursor-pointer'}`}
                       >
                         <td className="px-6 py-4 text-sm font-bold text-blue-800">{prog.code}</td>
                         <td className="px-6 py-4 text-sm font-semibold text-slate-800">{prog.name}</td>
@@ -976,14 +1028,11 @@ export default function DepartmentManagement() {
                           {prog.totalSemesters} Semesters ({prog.duration} Yr)
                         </td>
                         <td className="px-6 py-4 text-xs">
-                          <button
-                            onClick={(e) => handleToggleActiveProg(e, prog)}
-                            className={`px-3 py-1 rounded-full font-bold transition text-[11px] ${
-                              prog.isActive ? 'bg-emerald-50 text-emerald-700' : 'bg-slate-100 text-slate-500'
-                            }`}
-                          >
-                            {prog.isActive ? 'Active' : 'Inactive'}
-                          </button>
+                          {prog.deletedAt ? (
+                            <span className="px-3 py-1 rounded-full font-bold bg-rose-50 text-rose-700">Deactivated</span>
+                          ) : (
+                            <span className="px-3 py-1 rounded-full font-bold bg-emerald-50 text-emerald-700">Active</span>
+                          )}
                         </td>
                         <td className="px-6 py-4 text-sm text-right space-x-2">
                           <button
@@ -993,17 +1042,24 @@ export default function DepartmentManagement() {
                             <Edit2 className="w-3.5 h-3.5" />
                           </button>
                           <button
-                            onClick={(e) => handleArchiveProg(e, prog)}
-                            className="p-1.5 rounded-lg border border-red-50 bg-white hover:bg-red-50 text-red-500 transition inline-flex"
+                            onClick={(e) => handleToggleProgStatus(e, prog)}
+                            title={prog.deletedAt ? "Reactivate" : "Deactivate"}
+                            className={`p-1.5 rounded-lg border transition inline-flex ${
+                              prog.deletedAt 
+                                ? "border-emerald-50 bg-white hover:bg-emerald-50 text-emerald-600" 
+                                : "border-red-50 bg-white hover:bg-red-50 text-red-500"
+                            }`}
                           >
-                            <Trash2 className="w-3.5 h-3.5" />
+                            {prog.deletedAt ? <RefreshCw className="w-3.5 h-3.5" /> : <Power className="w-3.5 h-3.5" />}
                           </button>
-                          <span className="inline-flex items-center pl-2 group-hover:bg-blue-50 px-2 py-1 rounded-lg transition-colors">
-                            <span className="text-xs font-bold text-blue-700 opacity-0 group-hover:opacity-100 transition-opacity mr-2 flex items-center animate-pulse">
-                              👆 Click to view Batches
+                          {!prog.deletedAt && (
+                            <span className="inline-flex items-center pl-2 group-hover:bg-blue-50 px-2 py-1 rounded-lg transition-colors">
+                              <span className="text-xs font-bold text-blue-700 opacity-0 group-hover:opacity-100 transition-opacity mr-2 flex items-center animate-pulse">
+                                👆 Click to view Batches
+                              </span>
+                              <ChevronRight className="w-5 h-5 text-slate-300 group-hover:text-blue-700 transition transform group-hover:translate-x-1" />
                             </span>
-                            <ChevronRight className="w-5 h-5 text-slate-300 group-hover:text-blue-700 transition transform group-hover:translate-x-1" />
-                          </span>
+                          )}
                         </td>
                       </tr>
                     ))}
@@ -1053,6 +1109,19 @@ export default function DepartmentManagement() {
                 className="w-full pl-10 pr-4 py-2.5 bg-slate-50 rounded-xl border border-transparent focus:outline-none focus:bg-white focus:border-slate-200 transition duration-150 text-sm placeholder-slate-400 font-medium"
               />
             </div>
+            <label className="flex items-center gap-2 cursor-pointer group">
+              <div className="relative flex items-center">
+                <input
+                  type="checkbox"
+                  checked={showGraduated}
+                  onChange={(e) => setShowGraduated(e.target.checked)}
+                  className="sr-only"
+                />
+                <div className={`w-10 h-5 rounded-full transition-colors ${showGraduated ? 'bg-blue-600' : 'bg-slate-200'}`}></div>
+                <div className={`absolute left-0.5 top-0.5 w-4 h-4 rounded-full bg-white transition-transform ${showGraduated ? 'translate-x-5' : 'translate-x-0'} shadow-sm`}></div>
+              </div>
+              <span className="text-sm font-semibold text-slate-600 group-hover:text-slate-800 transition-colors">Show Graduated</span>
+            </label>
             <button
               onClick={() => fetchBatchesAndSchemes(selectedProgram.id)}
               className="w-10 h-10 rounded-xl border border-slate-200 bg-white flex items-center justify-center hover:bg-slate-50 text-slate-600 transition"
@@ -1094,8 +1163,14 @@ export default function DepartmentManagement() {
                     {filteredBatches.map((b) => (
                       <tr
                         key={b.id}
-                        onClick={() => setSelectedBatch(b)}
-                        className="hover:bg-blue-50/20 cursor-pointer transition duration-150 group"
+                        onClick={() => {
+                          if (b.status === 'ARCHIVED') {
+                            alert('This batch is deactivated. Reactivate it to view its calendar.');
+                            return;
+                          }
+                          setSelectedBatch(b);
+                        }}
+                        className={`transition duration-150 group ${b.status === 'ARCHIVED' ? 'cursor-not-allowed opacity-80 bg-slate-50' : 'hover:bg-blue-50/20 cursor-pointer'}`}
                       >
                         <td className="px-6 py-4 text-sm font-bold text-slate-800">{b.name}</td>
                         <td className="px-6 py-4 text-sm font-semibold text-blue-800">
@@ -1127,12 +1202,17 @@ export default function DepartmentManagement() {
                             <Edit2 className="w-3.5 h-3.5" />
                           </button>
                           <button
-                            onClick={(e) => handleArchiveBatch(e, b)}
-                            className="p-1.5 rounded-lg border border-red-50 bg-white hover:bg-red-50 text-red-500 transition inline-flex"
+                            onClick={(e) => handleToggleBatchStatus(e, b)}
+                            title={b.status === 'ARCHIVED' ? "Reactivate" : "Deactivate"}
+                            className={`p-1.5 rounded-lg border transition inline-flex ${
+                              b.status === 'ARCHIVED' 
+                                ? "border-emerald-50 bg-white hover:bg-emerald-50 text-emerald-600" 
+                                : "border-red-50 bg-white hover:bg-red-50 text-red-500"
+                            }`}
                           >
-                            <Power className="w-3.5 h-3.5" />
+                            {b.status === 'ARCHIVED' ? <RefreshCw className="w-3.5 h-3.5" /> : <Power className="w-3.5 h-3.5" />}
                           </button>
-                          <span className="inline-flex items-center pl-2 group-hover:bg-blue-50 px-2 py-1 rounded-lg transition-colors">
+                          <span className={`inline-flex items-center pl-2 group-hover:bg-blue-50 px-2 py-1 rounded-lg transition-colors ${b.status === 'ARCHIVED' ? 'hidden' : ''}`}>
                             <span className="text-xs font-bold text-blue-700 opacity-0 group-hover:opacity-100 transition-opacity mr-2 flex items-center animate-pulse">
                               👆 Click to view Calendar
                             </span>
@@ -1209,16 +1289,17 @@ export default function DepartmentManagement() {
             <div>
               <h2 className="text-2xl font-bold tracking-tight text-slate-900">Semester {selectedSemester} Academic Calendar</h2>
               <p className="text-slate-500 text-sm mt-0.5">
-                Cohort: <strong className="text-slate-700">{selectedBatch.name}</strong> {selectedBatch.classroom && `(${selectedBatch.classroom})`}. Configure academic calendar activities.
+                Batch: <strong className="text-slate-700">{selectedBatch.name}</strong> {selectedBatch.classroom && `(${selectedBatch.classroom})`}. Configure academic calendar activities.
               </p>
             </div>
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             
-            {/* Event Adder Form */}
-            <div className="bg-white border border-slate-100 rounded-3xl p-6 shadow-sm h-fit">
-              <h3 className="text-sm font-black text-slate-850 uppercase tracking-wider mb-4 border-b border-slate-50 pb-2">
+            {/* Event Adder Form (Hidden for GRADUATED) */}
+            {selectedBatch.status !== 'GRADUATED' && (
+              <div className="bg-white border border-slate-100 rounded-3xl p-6 shadow-sm h-fit">
+                <h3 className="text-sm font-black text-slate-850 uppercase tracking-wider mb-4 border-b border-slate-50 pb-2">
                 Add Calendar Event
               </h3>
 
@@ -1274,10 +1355,11 @@ export default function DepartmentManagement() {
                   <span>Add Event</span>
                 </button>
               </form>
-            </div>
+              </div>
+            )}
 
             {/* Event List */}
-            <div className="lg:col-span-2 bg-white border border-slate-100 rounded-3xl p-6 shadow-sm">
+            <div className={`${selectedBatch.status !== 'GRADUATED' ? 'lg:col-span-2' : 'lg:col-span-3'} bg-white border border-slate-100 rounded-3xl p-6 shadow-sm`}>
               <h3 className="text-sm font-black text-slate-850 uppercase tracking-wider mb-4 border-b border-slate-50 pb-2">
                 Calendar Entries
               </h3>
@@ -1319,13 +1401,15 @@ export default function DepartmentManagement() {
                           </div>
                         </div>
                       </div>
-                      <button
-                        onClick={() => handleDeleteEvent(evt.id)}
-                        className="p-1.5 rounded-lg border border-red-50 text-red-400 hover:text-red-600 hover:bg-red-50 transition"
-                        title="Delete entry"
-                      >
-                        <Trash2 className="w-3.5 h-3.5" />
-                      </button>
+                      {selectedBatch.status !== 'GRADUATED' && (
+                        <button
+                          onClick={() => handleDeleteEvent(evt.id)}
+                          className="p-1.5 rounded-lg border border-red-50 text-red-400 hover:text-red-600 hover:bg-red-50 transition"
+                          title="Delete entry"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      )}
                     </div>
                   ))}
                 </div>
@@ -1433,19 +1517,19 @@ export default function DepartmentManagement() {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
           <div className="bg-white rounded-3xl shadow-xl w-full max-w-lg overflow-hidden animate-in zoom-in-95 duration-200">
             <div className="flex justify-between items-center px-6 py-5 border-b border-slate-100">
-              <h3 className="text-lg font-bold text-slate-900">{editingBatch ? 'Edit Cohort' : 'Add Cohort'}</h3>
+              <h3 className="text-lg font-bold text-slate-900">{editingBatch ? 'Edit Batch' : 'Add Batch'}</h3>
               <button onClick={() => setIsBatchModalOpen(false)} className="text-slate-450 text-2xl hover:text-slate-700">&times;</button>
             </div>
             <form onSubmit={handleBatchSubmit} className="p-6 space-y-4">
               {submitBatchError && <p className="text-xs text-red-600 bg-red-50 p-3 rounded-xl">{submitBatchError}</p>}
               
               <div className="space-y-1">
-                <label className="text-xs font-bold uppercase text-slate-600 tracking-wider">Cohort Batch Name</label>
+                <label className="text-xs font-bold uppercase text-slate-600 tracking-wider">Batch Name</label>
                 <input type="text" required value={batchName} onChange={(e) => setBatchName(e.target.value)} placeholder="e.g. 2024–2028" className="w-full px-4 py-2.5 border border-slate-200 rounded-xl text-sm font-bold" />
               </div>
 
               <div className="space-y-1">
-                <label className="text-xs font-bold uppercase text-slate-600 tracking-wider">Class Room Name (Differentiator)</label>
+                <label className="text-xs font-bold uppercase text-slate-600 tracking-wider" style={{ fontVariantLigatures: 'none', letterSpacing: '0.08em' }}>Class Room Name (Differentiator)</label>
                 <input type="text" value={batchClassroom} onChange={(e) => setBatchClassroom(e.target.value)} placeholder="e.g. Room 204B, CSE Lab A" className="w-full px-4 py-2.5 border border-slate-200 rounded-xl text-sm font-semibold" />
               </div>
 
@@ -1473,7 +1557,7 @@ export default function DepartmentManagement() {
               </div>
 
               <div className="space-y-1">
-                <label className="text-xs font-bold uppercase text-slate-605 tracking-wider">Cohort Status</label>
+                <label className="text-xs font-bold uppercase text-slate-605 tracking-wider">Batch Status</label>
                 <select value={batchStatus} onChange={(e) => setBatchStatus(e.target.value as any)} className="w-full px-4 py-2.5 bg-white border border-slate-200 rounded-xl text-sm font-semibold">
                   <option value="UPCOMING">Upcoming</option>
                   <option value="ACTIVE">Active</option>
@@ -1484,7 +1568,7 @@ export default function DepartmentManagement() {
 
               <div className="flex justify-end gap-3 border-t border-slate-100 pt-4 mt-6">
                 <button type="button" onClick={() => setIsBatchModalOpen(false)} className="px-4 py-2 text-slate-500 font-semibold text-sm">Cancel</button>
-                <button type="submit" disabled={isSubmittingBatch || !batchSchemeId} className="px-5 py-2 bg-blue-900 text-white rounded-xl text-sm font-bold">{isSubmittingBatch ? 'Saving...' : 'Save Cohort'}</button>
+                <button type="submit" disabled={isSubmittingBatch || !batchSchemeId} className="px-5 py-2 bg-blue-900 text-white rounded-xl text-sm font-bold">{isSubmittingBatch ? 'Saving...' : 'Save Batch'}</button>
               </div>
             </form>
           </div>

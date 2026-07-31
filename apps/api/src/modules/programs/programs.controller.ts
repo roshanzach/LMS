@@ -31,6 +31,7 @@ class UpdateProgramDto {
   duration?: number;
   isActive?: boolean;
   totalSemesters?: number;
+  deletedAt?: string | null;
 }
 
 @Controller('college-admin/programs')

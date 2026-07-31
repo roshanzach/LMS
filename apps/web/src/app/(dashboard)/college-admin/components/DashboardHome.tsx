@@ -29,10 +29,9 @@ export default function DashboardHome({ onOpenModal, onNavigate }: DashboardHome
   const [username, setUsername] = useState('Admin');
   const [collegeName, setCollegeName] = useState('');
   const [metrics, setMetrics] = useState({
-    students: 1240,
-    faculty: 84,
-    attendance: '92.4%',
-    fees: '₹12.8L',
+    students: 0,
+    faculty: 0,
+    attendance: '0%',
   });
 
   const [counts, setCounts] = useState({
@@ -75,14 +74,15 @@ export default function DashboardHome({ onOpenModal, onNavigate }: DashboardHome
       }
     }
 
-    // Fetch counts for onboarding checklist
+    // Fetch counts for onboarding checklist and stats
     const fetchCounts = async () => {
       try {
-        const [depRes, progRes, schRes, batRes] = await Promise.all([
+        const [depRes, progRes, schRes, batRes, statsRes] = await Promise.all([
           fetch(`${API_BASE}/college-admin/departments`, { headers: getAuthHeaders() }),
           fetch(`${API_BASE}/college-admin/programs`, { headers: getAuthHeaders() }),
           fetch(`${API_BASE}/college-admin/schemes`, { headers: getAuthHeaders() }),
           fetch(`${API_BASE}/college-admin/batches`, { headers: getAuthHeaders() }),
+          fetch(`${API_BASE}/college-admin/dashboard-stats`, { headers: getAuthHeaders() }),
         ]);
 
         if (depRes.ok && progRes.ok && schRes.ok && batRes.ok) {
@@ -97,6 +97,16 @@ export default function DashboardHome({ onOpenModal, onNavigate }: DashboardHome
             batches: bats.length || 0,
           });
         }
+
+        if (statsRes && statsRes.ok) {
+          const stats = await statsRes.json();
+          setMetrics({
+            students: stats.totalStudents || 0,
+            faculty: stats.totalFaculty || 0,
+            attendance: stats.avgAttendance || '0%',
+          });
+        }
+
       } catch (err) {
         console.error('Failed to fetch stats for onboarding', err);
       } finally {
@@ -240,86 +250,57 @@ export default function DashboardHome({ onOpenModal, onNavigate }: DashboardHome
       </div>
 
       {/* Overview Cards Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
         
         {/* Students Metric */}
-        <div className="bg-white border border-slate-100 rounded-3xl p-6 shadow-sm hover:shadow-md transition duration-205 flex flex-col justify-between h-[150px]">
-          <div>
-            <div className="flex justify-between items-start">
-              <span className="text-[11px] font-extrabold text-slate-400 uppercase tracking-widest">
-                Total Students
-              </span>
-              <div className="w-9 h-9 rounded-xl bg-blue-50 flex items-center justify-center text-blue-700">
-                <GraduationCap className="w-5 h-5" />
-              </div>
-            </div>
-            <div className="flex items-baseline gap-2 mt-3">
-              <span className="text-3xl font-black text-slate-800 tracking-tight">
-                {metrics.students}
-              </span>
+        <div className="bg-white border border-slate-100 rounded-3xl p-6 shadow-sm hover:shadow-md transition duration-205">
+          <div className="flex justify-between items-start">
+            <span className="text-[11px] font-extrabold text-slate-400 uppercase tracking-widest">
+              Total Students
+            </span>
+            <div className="w-9 h-9 rounded-xl bg-blue-50 flex items-center justify-center text-blue-700">
+              <GraduationCap className="w-5 h-5" />
             </div>
           </div>
-          <span className="text-[10px] text-emerald-600 font-bold">↑ 4.2% from last term</span>
+          <div className="flex items-baseline gap-2 mt-3">
+            <span className="text-3xl font-black text-slate-800 tracking-tight">
+              {metrics.students}
+            </span>
+          </div>
         </div>
 
         {/* Faculty Metric */}
-        <div className="bg-white border border-slate-100 rounded-3xl p-6 shadow-sm hover:shadow-md transition duration-205 flex flex-col justify-between h-[150px]">
-          <div>
-            <div className="flex justify-between items-start">
-              <span className="text-[11px] font-extrabold text-slate-400 uppercase tracking-widest">
-                Active Faculty
-              </span>
-              <div className="w-9 h-9 rounded-xl bg-violet-50 flex items-center justify-center text-violet-750">
-                <Users className="w-5 h-5" />
-              </div>
-            </div>
-            <div className="flex items-baseline gap-2 mt-3">
-              <span className="text-3xl font-black text-slate-800 tracking-tight">
-                {metrics.faculty}
-              </span>
+        <div className="bg-white border border-slate-100 rounded-3xl p-6 shadow-sm hover:shadow-md transition duration-205">
+          <div className="flex justify-between items-start">
+            <span className="text-[11px] font-extrabold text-slate-400 uppercase tracking-widest">
+              Active Faculty
+            </span>
+            <div className="w-9 h-9 rounded-xl bg-violet-50 flex items-center justify-center text-violet-750">
+              <Users className="w-5 h-5" />
             </div>
           </div>
-          <span className="text-[10px] text-slate-400 font-semibold">100% profile compliance</span>
+          <div className="flex items-baseline gap-2 mt-3">
+            <span className="text-3xl font-black text-slate-800 tracking-tight">
+              {metrics.faculty}
+            </span>
+          </div>
         </div>
 
         {/* Attendance Metric */}
-        <div className="bg-white border border-slate-100 rounded-3xl p-6 shadow-sm hover:shadow-md transition duration-205 flex flex-col justify-between h-[150px]">
-          <div>
-            <div className="flex justify-between items-start">
-              <span className="text-[11px] font-extrabold text-slate-400 uppercase tracking-widest">
-                Avg Attendance
-              </span>
-              <div className="w-9 h-9 rounded-xl bg-emerald-50 flex items-center justify-center text-emerald-600">
-                <Calendar className="w-5 h-5" />
-              </div>
-            </div>
-            <div className="flex items-baseline gap-2 mt-3">
-              <span className="text-3xl font-black text-slate-800 tracking-tight">
-                {metrics.attendance}
-              </span>
+        <div className="bg-white border border-slate-100 rounded-3xl p-6 shadow-sm hover:shadow-md transition duration-205">
+          <div className="flex justify-between items-start">
+            <span className="text-[11px] font-extrabold text-slate-400 uppercase tracking-widest">
+              Avg Attendance
+            </span>
+            <div className="w-9 h-9 rounded-xl bg-emerald-50 flex items-center justify-center text-emerald-600">
+              <Calendar className="w-5 h-5" />
             </div>
           </div>
-          <span className="text-[10px] text-emerald-600 font-bold">Stable tracking threshold</span>
-        </div>
-
-        {/* Fee Collection Metric */}
-        <div className="bg-white border border-slate-100 rounded-3xl p-6 shadow-sm hover:shadow-md transition duration-205 flex flex-col justify-between h-[150px]">
-          <div>
-            <div className="flex justify-between items-start">
-              <span className="text-[11px] font-extrabold text-slate-400 uppercase tracking-widest">
-                Fee Collection
-              </span>
-              <div className="w-9 h-9 rounded-xl bg-amber-50 flex items-center justify-center text-amber-600">
-                <IndianRupee className="w-5 h-5" />
-              </div>
-            </div>
-            <div className="flex items-baseline gap-2 mt-3">
-              <span className="text-3xl font-black text-slate-800 tracking-tight">
-                {metrics.fees}
-              </span>
-            </div>
+          <div className="flex items-baseline gap-2 mt-3">
+            <span className="text-3xl font-black text-slate-800 tracking-tight">
+              {metrics.attendance}
+            </span>
           </div>
-          <span className="text-[10px] text-amber-600 font-bold">85% total collected</span>
         </div>
 
       </div>

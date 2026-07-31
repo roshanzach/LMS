@@ -1,12 +1,14 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { Plus, Search, Calendar, GraduationCap, Loader2, RefreshCw, Edit2, Power } from 'lucide-react';
+import { Plus, Search, GraduationCap, Loader2, RefreshCw, Edit2, Power, Layers } from 'lucide-react';
+import BulkAddBatchModal from './BulkAddBatchModal';
 
 interface Program {
   id: string;
   name: string;
   code: string;
+  degreeType: string;
   totalSemesters: number;
 }
 
@@ -62,6 +64,7 @@ export default function BatchManagement() {
 
   // Modals
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isBulkModalOpen, setIsBulkModalOpen] = useState(false);
   const [editingBatch, setEditingBatch] = useState<Batch | null>(null);
 
   // Form states
@@ -211,12 +214,36 @@ export default function BatchManagement() {
     }
   };
 
-  const filteredBatches = batches.filter(
-    (b) =>
-      b.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      b.program?.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      b.scheme?.name.toLowerCase().includes(searchQuery.toLowerCase()),
-  );
+  const filteredBatches = batches.filter((b) => {
+    if (!searchQuery.trim()) return true;
+
+    // Split batch name on '|' to get exact parts: ["2031-2035", "MECH", "B"]
+    const nameParts = b.name.split('|').map((p) => p.trim().toLowerCase());
+
+    // Build list of individual searchable fields (exact matching will run against each)
+    const fields = [
+      ...nameParts,
+      b.program?.name?.toLowerCase() ?? '',
+      b.program?.code?.toLowerCase() ?? '',
+      b.scheme?.name?.toLowerCase() ?? '',
+      b.scheme?.university?.toLowerCase() ?? '',
+      String(b.startYear),
+      String(b.endYear),
+      b.status?.toLowerCase() ?? '',
+    ].filter(Boolean);
+
+    const tokens = searchQuery.trim().toLowerCase().split(/\s+/);
+
+    return tokens.every((token) =>
+      fields.some((field) => {
+        // Always check exact match first (catches "A", "B", "CE", "MECH" as pipe parts)
+        if (field === token) return true;
+        // For tokens longer than 2 chars, also allow substring match ("civil", "ktu", "2031")
+        if (token.length > 2) return field.includes(token);
+        return false;
+      })
+    );
+  });
 
   return (
     <div className="p-6 md:p-8 space-y-6 animate-in fade-in duration-200">
@@ -230,13 +257,22 @@ export default function BatchManagement() {
             Configure academic batches, align regulations, and track graduation lifecycles.
           </p>
         </div>
-        <button
-          onClick={handleOpenAddModal}
-          className="flex items-center gap-2.5 px-5 py-3 rounded-2xl bg-blue-900 hover:bg-blue-800 text-white font-bold text-sm shadow-md shadow-blue-900/10 active:scale-[0.98] transition-all duration-150 self-start md:self-auto"
-        >
-          <Plus className="w-4 h-4" />
-          <span>Add Batch</span>
-        </button>
+        <div className="flex items-center gap-3 self-start md:self-auto">
+          <button
+            onClick={() => setIsBulkModalOpen(true)}
+            className="flex items-center gap-2.5 px-5 py-3 rounded-2xl bg-slate-800 hover:bg-slate-700 text-white font-bold text-sm shadow-md shadow-slate-900/10 active:scale-[0.98] transition-all duration-150"
+          >
+            <Layers className="w-4 h-4" />
+            <span>Bulk Add</span>
+          </button>
+          <button
+            onClick={handleOpenAddModal}
+            className="flex items-center gap-2.5 px-5 py-3 rounded-2xl bg-blue-900 hover:bg-blue-800 text-white font-bold text-sm shadow-md shadow-blue-900/10 active:scale-[0.98] transition-all duration-150"
+          >
+            <Plus className="w-4 h-4" />
+            <span>Add Batch</span>
+          </button>
+        </div>
       </div>
 
       {/* Control bar */}
@@ -475,6 +511,17 @@ export default function BatchManagement() {
           </div>
         </div>
       )}
+
+      {/* Bulk Add Modal */}
+      <BulkAddBatchModal
+        isOpen={isBulkModalOpen}
+        onClose={() => setIsBulkModalOpen(false)}
+        onSuccess={fetchData}
+        programs={programs}
+        schemes={schemes}
+        getAuthHeaders={getAuthHeaders}
+        apiBase={API_BASE}
+      />
     </div>
   );
 }

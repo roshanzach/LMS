@@ -14,6 +14,7 @@ import {
   Eye,
   ChevronLeft,
   Trash2,
+  Power,
 } from 'lucide-react';
 
 interface Program {
@@ -30,6 +31,7 @@ interface Scheme {
   effectiveYear: number;
   isActive: boolean;
   programId: string;
+  deletedAt?: string | null;
   program?: Program;
 }
 
@@ -241,17 +243,27 @@ export default function SchemeManagement() {
     }
   };
 
-  const handleToggleActive = async (sch: Scheme) => {
+  const handleToggleSchemeStatus = async (sch: Scheme) => {
     try {
-      const res = await fetch(`${API_BASE}/college-admin/schemes/${sch.id}`, {
-        method: 'PATCH',
-        headers: { 
-          'Content-Type': 'application/json',
-          ...getAuthHeaders()
-        },
-        body: JSON.stringify({ isActive: !sch.isActive }),
-      });
-      if (!res.ok) throw new Error('Failed to update status');
+      if (sch.deletedAt) {
+        // Reactivate
+        const res = await fetch(`${API_BASE}/college-admin/schemes/${sch.id}`, {
+          method: 'PATCH',
+          headers: { 
+            'Content-Type': 'application/json',
+            ...getAuthHeaders()
+          },
+          body: JSON.stringify({ deletedAt: null }),
+        });
+        if (!res.ok) throw new Error('Failed to reactivate scheme');
+      } else {
+        // Deactivate (soft delete)
+        const res = await fetch(`${API_BASE}/college-admin/schemes/${sch.id}`, {
+          method: 'DELETE',
+          headers: getAuthHeaders(),
+        });
+        if (!res.ok) throw new Error('Failed to deactivate scheme');
+      }
       fetchData();
     } catch (err: any) {
       alert(err.message ?? 'Failed to update status');
@@ -414,17 +426,11 @@ export default function SchemeManagement() {
                     <td className="px-6 py-4 text-sm font-semibold text-slate-500">{sch.effectiveYear}</td>
                     <td className="px-6 py-4 text-sm font-medium text-slate-600">{sch.program?.name}</td>
                     <td className="px-6 py-4 text-xs">
-                      <button
-                        onClick={() => handleToggleActive(sch)}
-                        className={`px-3 py-1 rounded-full font-bold transition
-                          ${
-                            sch.isActive
-                              ? 'bg-emerald-50 text-emerald-700 hover:bg-emerald-100'
-                              : 'bg-slate-100 text-slate-500 hover:bg-slate-200'
-                          }`}
-                      >
-                        {sch.isActive ? 'Active' : 'Inactive'}
-                      </button>
+                      {sch.deletedAt ? (
+                        <span className="px-3 py-1 rounded-full font-bold bg-rose-50 text-rose-700">Deactivated</span>
+                      ) : (
+                        <span className="px-3 py-1 rounded-full font-bold bg-emerald-50 text-emerald-700">Active</span>
+                      )}
                     </td>
                     <td className="px-6 py-4 text-sm text-right space-x-2">
                       <button
@@ -441,6 +447,17 @@ export default function SchemeManagement() {
                         title="Edit scheme"
                       >
                         <Edit2 className="w-3.5 h-3.5" />
+                      </button>
+                      <button
+                        onClick={() => handleToggleSchemeStatus(sch)}
+                        title={sch.deletedAt ? "Reactivate" : "Deactivate"}
+                        className={`p-1.5 rounded-lg border transition inline-flex ${
+                          sch.deletedAt 
+                            ? "border-emerald-50 bg-white hover:bg-emerald-50 text-emerald-600" 
+                            : "border-red-50 bg-white hover:bg-red-50 text-red-500"
+                        }`}
+                      >
+                        {sch.deletedAt ? <RefreshCw className="w-3.5 h-3.5" /> : <Power className="w-3.5 h-3.5" />}
                       </button>
                     </td>
                   </tr>

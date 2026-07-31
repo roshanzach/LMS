@@ -6,7 +6,7 @@ export class DepartmentsService {
   constructor(private readonly prisma: PrismaService) {}
 
   async listDepartments(collegeId?: string) {
-    let whereClause: any = { deletedAt: null };
+    let whereClause: any = {};
     if (collegeId) {
       whereClause.collegeId = collegeId;
     }
@@ -22,7 +22,7 @@ export class DepartmentsService {
   }
 
   async getDepartment(id: string, collegeId?: string) {
-    const whereClause: any = { id, deletedAt: null };
+    const whereClause: any = { id };
     if (collegeId) whereClause.collegeId = collegeId;
     
     const dept = await this.prisma.department.findFirst({
@@ -64,10 +64,10 @@ export class DepartmentsService {
 
   async updateDepartment(
     id: string,
-    data: { name?: string; code?: string; deletedAt?: Date | null },
+    data: { name?: string; code?: string; deletedAt?: Date | string | null },
     collegeId?: string,
   ) {
-    const whereClause: any = { id, deletedAt: null };
+    const whereClause: any = { id };
     if (collegeId) whereClause.collegeId = collegeId;
 
     const dept = await this.prisma.department.findFirst({

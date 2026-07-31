@@ -1,4 +1,4 @@
-export type UserRole = 
+export type UserRole =
   | 'SUPER_ADMIN'
   | 'COLLEGE_ADMIN'
   | 'HOD'

@@ -26,6 +26,7 @@ class UpdateSchemeDto {
   university?: string;
   effectiveYear?: number;
   isActive?: boolean;
+  deletedAt?: Date | null;
 }
 
 @Controller('college-admin/schemes')

@@ -14,6 +14,7 @@ import { BatchesService } from './batches.service';
 import { CollegeAdminGuard } from '../../common/guards/college-admin.guard';
 import { CurrentCollege } from '../../common/decorators/current-college.decorator';
 import { BatchStatus } from '@prisma/client';
+import { BulkCreateBatchDto } from './dto/bulk-create-batch.dto';
 
 class CreateBatchDto {
   name: string;
@@ -37,7 +38,7 @@ class UpdateBatchDto {
 @Controller('college-admin/batches')
 @UseGuards(CollegeAdminGuard)
 export class BatchesController {
-  constructor(private readonly batchesService: BatchesService) {}
+  constructor(private readonly batchesService: BatchesService) { }
 
   @Get()
   async list(@Query('programId') programId?: string, @CurrentCollege() collegeId?: string) {
@@ -55,6 +56,14 @@ export class BatchesController {
       throw new BadRequestException('All fields (name, startYear, endYear, programId, schemeId) are required');
     }
     return this.batchesService.createBatch(body, collegeId);
+  }
+
+  @Post('bulk')
+  async bulkCreate(@Body() body: BulkCreateBatchDto, @CurrentCollege() collegeId?: string) {
+    if (!body.name || !body.startYear || !body.endYear || !body.programs || !body.programs.length) {
+      throw new BadRequestException('All common fields (name, startYear, endYear) and at least one program are required');
+    }
+    return this.batchesService.bulkCreateBatches(body, collegeId);
   }
 
   @Patch(':id')

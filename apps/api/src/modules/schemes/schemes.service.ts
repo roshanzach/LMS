@@ -6,7 +6,7 @@ export class SchemesService {
   constructor(private readonly prisma: PrismaService) {}
 
   async listSchemes(programId?: string, collegeId?: string) {
-    let whereClause: any = { deletedAt: null };
+    let whereClause: any = {};
     if (programId) {
       whereClause.programId = programId;
     }
@@ -116,10 +116,11 @@ export class SchemesService {
       university?: string;
       effectiveYear?: number;
       isActive?: boolean;
+      deletedAt?: Date | null;
     },
     collegeId?: string,
   ) {
-    let whereClause: any = { id, deletedAt: null };
+    let whereClause: any = { id };
     if (collegeId) {
       whereClause.collegeId = collegeId;
     }
@@ -135,6 +136,7 @@ export class SchemesService {
     if (data.university !== undefined) updatePayload.university = data.university.trim();
     if (data.effectiveYear !== undefined) updatePayload.effectiveYear = data.effectiveYear;
     if (data.isActive !== undefined) updatePayload.isActive = data.isActive;
+    if (data.deletedAt !== undefined) updatePayload.deletedAt = data.deletedAt;
 
     if (data.name !== undefined) {
       const nameTrimmed = data.name.trim();

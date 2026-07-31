@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { X, Check } from 'lucide-react';
 
 interface AddFacultyModalProps {
@@ -9,174 +9,121 @@ interface AddFacultyModalProps {
 }
 
 export default function AddFacultyModal({ onClose, onSuccess }: AddFacultyModalProps) {
-  const [name, setName] = useState('');
   const [employeeId, setEmployeeId] = useState('');
+  const [fullName, setFullName] = useState('');
   const [email, setEmail] = useState('');
-  const [department, setDepartment] = useState('Computer Science');
   const [designation, setDesignation] = useState('Assistant Professor');
-  const [courses, setCourses] = useState('');
+  const [department, setDepartment] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose();
-    };
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [onClose]);
-
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
-
-    setTimeout(() => {
-      setIsSubmitting(false);
-      onSuccess(`Successfully added faculty member ${name} (${employeeId})!`);
-      onClose();
-    }, 800);
+    // Placeholder: faculty backend not yet implemented
+    await new Promise((r) => setTimeout(r, 600));
+    setIsSubmitting(false);
+    onSuccess('Faculty member added successfully!');
+    onClose();
   };
 
   return (
-    <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4"
-      onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
-    >
-      <div className="bg-white rounded-3xl shadow-xl border border-slate-100 w-full max-w-lg overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+    <div className="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center p-4">
+      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden">
         {/* Header */}
-        <div className="flex items-center justify-between px-6 py-5 border-b border-slate-100">
-          <h3 className="text-lg font-bold text-slate-900">Add New Faculty</h3>
+        <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100">
+          <h2 className="text-base font-bold text-slate-900">Add Faculty Member</h2>
           <button
             onClick={onClose}
-            className="w-8 h-8 rounded-lg flex items-center justify-center text-slate-400 hover:bg-slate-100 hover:text-slate-600 transition-colors"
+            className="w-8 h-8 flex items-center justify-center rounded-xl text-slate-400 hover:bg-slate-100 hover:text-slate-600 transition"
           >
             <X className="w-4 h-4" />
           </button>
         </div>
 
         {/* Form */}
-        <form onSubmit={handleSubmit} className="p-6 space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {/* Name */}
-            <div className="space-y-1.5 md:col-span-2">
-              <label htmlFor="faculty-name" className="block text-xs font-bold text-slate-700 uppercase tracking-wider">
-                Full Name
-              </label>
-              <input
-                id="faculty-name"
-                type="text"
-                required
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                placeholder="Dr. Rajesh Krishnan"
-                className="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition duration-150 text-sm"
-              />
-            </div>
-
-            {/* Employee ID */}
-            <div className="space-y-1.5">
-              <label htmlFor="faculty-id" className="block text-xs font-bold text-slate-700 uppercase tracking-wider">
-                Employee ID
-              </label>
-              <input
-                id="faculty-id"
-                type="text"
-                required
-                value={employeeId}
-                onChange={(e) => setEmployeeId(e.target.value)}
-                placeholder="FAC2026102"
-                className="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition duration-150 text-sm"
-              />
-            </div>
-
-            {/* Email */}
-            <div className="space-y-1.5">
-              <label htmlFor="faculty-email" className="block text-xs font-bold text-slate-700 uppercase tracking-wider">
-                Email Address
-              </label>
-              <input
-                id="faculty-email"
-                type="email"
-                required
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="faculty@college.edu"
-                className="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition duration-150 text-sm"
-              />
-            </div>
-
-            {/* Department */}
-            <div className="space-y-1.5">
-              <label htmlFor="faculty-dept" className="block text-xs font-bold text-slate-700 uppercase tracking-wider">
-                Department
-              </label>
-              <select
-                id="faculty-dept"
-                value={department}
-                onChange={(e) => setDepartment(e.target.value)}
-                className="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition duration-150 text-sm"
-              >
-                <option value="Computer Science">Computer Science</option>
-                <option value="Information Technology">Information Technology</option>
-                <option value="Electronics & Communication">Electronics & Communication</option>
-                <option value="Mechanical Engineering">Mechanical Engineering</option>
-                <option value="Civil Engineering">Civil Engineering</option>
-              </select>
-            </div>
-
-            {/* Designation */}
-            <div className="space-y-1.5">
-              <label htmlFor="faculty-designation" className="block text-xs font-bold text-slate-700 uppercase tracking-wider">
-                Designation
-              </label>
-              <select
-                id="faculty-designation"
-                value={designation}
-                onChange={(e) => setDesignation(e.target.value)}
-                className="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition duration-150 text-sm"
-              >
-                <option value="Professor">Professor</option>
-                <option value="Associate Professor">Associate Professor</option>
-                <option value="Assistant Professor">Assistant Professor</option>
-                <option value="Lecturer">Lecturer</option>
-              </select>
-            </div>
-
-            {/* Courses Teaching */}
-            <div className="space-y-1.5 md:col-span-2">
-              <label htmlFor="faculty-courses" className="block text-xs font-bold text-slate-700 uppercase tracking-wider">
-                Courses Teaching
-              </label>
-              <input
-                id="faculty-courses"
-                type="text"
-                value={courses}
-                onChange={(e) => setCourses(e.target.value)}
-                placeholder="Database Management Systems, Software Engineering"
-                className="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition duration-150 text-sm"
-              />
-            </div>
+        <form onSubmit={handleSubmit} className="px-6 py-5 space-y-4">
+          <div>
+            <label className="block text-sm font-semibold text-slate-700 mb-1.5">Employee ID *</label>
+            <input
+              type="text"
+              required
+              value={employeeId}
+              onChange={(e) => setEmployeeId(e.target.value)}
+              placeholder="e.g. FAC2024001"
+              className="w-full px-3.5 py-2.5 text-sm rounded-xl border border-slate-200 bg-slate-50 focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 outline-none transition"
+            />
           </div>
 
-          {/* Footer Buttons */}
-          <div className="flex items-center justify-end gap-3 pt-4 border-t border-slate-100 mt-6">
+          <div>
+            <label className="block text-sm font-semibold text-slate-700 mb-1.5">Full Name *</label>
+            <input
+              type="text"
+              required
+              value={fullName}
+              onChange={(e) => setFullName(e.target.value)}
+              placeholder="e.g. Dr. John Smith"
+              className="w-full px-3.5 py-2.5 text-sm rounded-xl border border-slate-200 bg-slate-50 focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 outline-none transition"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-semibold text-slate-700 mb-1.5">Email *</label>
+            <input
+              type="email"
+              required
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="e.g. john@college.edu"
+              className="w-full px-3.5 py-2.5 text-sm rounded-xl border border-slate-200 bg-slate-50 focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 outline-none transition"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-semibold text-slate-700 mb-1.5">Designation *</label>
+            <select
+              required
+              value={designation}
+              onChange={(e) => setDesignation(e.target.value)}
+              className="w-full px-3.5 py-2.5 text-sm rounded-xl border border-slate-200 bg-slate-50 focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 outline-none transition"
+            >
+              <option>Professor</option>
+              <option>Associate Professor</option>
+              <option>Assistant Professor</option>
+              <option>Lecturer</option>
+            </select>
+          </div>
+
+          <div>
+            <label className="block text-sm font-semibold text-slate-700 mb-1.5">Department</label>
+            <input
+              type="text"
+              value={department}
+              onChange={(e) => setDepartment(e.target.value)}
+              placeholder="e.g. Computer Science"
+              className="w-full px-3.5 py-2.5 text-sm rounded-xl border border-slate-200 bg-slate-50 focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 outline-none transition"
+            />
+          </div>
+
+          {/* Actions */}
+          <div className="flex gap-3 pt-2">
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2.5 rounded-xl text-sm font-semibold text-slate-600 hover:bg-slate-100 hover:text-slate-800 transition"
+              className="flex-1 py-2.5 rounded-xl border border-slate-200 text-sm font-semibold text-slate-600 hover:bg-slate-50 transition"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={isSubmitting}
-              className="px-5 py-2.5 rounded-xl text-sm font-semibold text-white bg-blue-600 hover:bg-blue-700 shadow-md shadow-blue-500/10 transition flex items-center justify-center gap-2 min-w-[120px] disabled:opacity-55"
+              className="flex-1 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold flex items-center justify-center gap-2 shadow-md shadow-blue-500/20 transition disabled:opacity-50"
             >
-              {isSubmitting ? 'Saving...' : (
-                <>
-                  <Check className="w-4 h-4" />
-                  Save Faculty
-                </>
+              {isSubmitting ? (
+                <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+              ) : (
+                <Check className="w-4 h-4" />
               )}
+              {isSubmitting ? 'Adding...' : 'Add Faculty'}
             </button>
           </div>
         </form>

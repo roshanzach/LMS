@@ -7,7 +7,7 @@ export class ProgramsService {
   constructor(private readonly prisma: PrismaService) {}
 
   async listPrograms(departmentId?: string, collegeId?: string) {
-    let whereClause: any = { deletedAt: null };
+    let whereClause: any = {};
     if (departmentId) {
       whereClause.departmentId = departmentId;
     }
@@ -27,7 +27,7 @@ export class ProgramsService {
   }
 
   async getProgram(id: string, collegeId?: string) {
-    let whereClause: any = { id, deletedAt: null };
+    let whereClause: any = { id };
     if (collegeId) {
       whereClause.collegeId = collegeId;
     }
@@ -106,10 +106,11 @@ export class ProgramsService {
       duration?: number;
       isActive?: boolean;
       totalSemesters?: number;
+      deletedAt?: Date | string | null;
     },
     collegeId?: string,
   ) {
-    let whereClause: any = { id, deletedAt: null };
+    let whereClause: any = { id };
     if (collegeId) {
       whereClause.collegeId = collegeId;
     }
@@ -123,6 +124,7 @@ export class ProgramsService {
     const updatedData: any = {};
     if (data.name !== undefined) updatedData.name = data.name;
     if (data.isActive !== undefined) updatedData.isActive = data.isActive;
+    if (data.deletedAt !== undefined) updatedData.deletedAt = data.deletedAt;
     if (data.totalSemesters !== undefined) updatedData.totalSemesters = data.totalSemesters;
 
     if (data.code !== undefined) {

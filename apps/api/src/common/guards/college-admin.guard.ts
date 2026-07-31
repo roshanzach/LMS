@@ -9,7 +9,7 @@ export class CollegeAdminGuard implements CanActivate {
     const request = context.switchToHttp().getRequest();
     const role = request.headers['x-user-role'];
     const username = request.headers['x-username'];
-    
+
     if (role !== 'COLLEGE_ADMIN') {
       throw new ForbiddenException('Only College Admins are authorized to access this resource.');
     }
@@ -18,6 +18,7 @@ export class CollegeAdminGuard implements CanActivate {
       throw new ForbiddenException('Username header is required for College Admin access.');
     }
 
+    // Verify user in the database
     const user = await this.prisma.user.findUnique({
       where: { username },
     });
@@ -26,8 +27,11 @@ export class CollegeAdminGuard implements CanActivate {
       throw new ForbiddenException('Unauthorized or invalid user role.');
     }
 
+    // Check if the user is linked to a college
     let collegeId = user.collegeId;
+
     if (!collegeId) {
+      // Auto-provision a new college for this admin
       const cleanName = user.username ? user.username.trim() : 'Admin';
       const newCollege = await this.prisma.college.create({
         data: {
@@ -36,15 +40,19 @@ export class CollegeAdminGuard implements CanActivate {
           createdBy: 'SYSTEM_AUTO',
         },
       });
+
+      // Update the admin user with the new collegeId
       await this.prisma.user.update({
         where: { id: user.id },
         data: { collegeId: newCollege.id },
       });
+
       collegeId = newCollege.id;
     }
 
+    // Attach collegeId to the request object for downstream controllers
     request.collegeId = collegeId;
+
     return true;
   }
 }
-

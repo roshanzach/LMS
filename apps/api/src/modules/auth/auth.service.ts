@@ -31,7 +31,7 @@ export class AuthService implements OnModuleInit {
           data: {
             username: SUPER_ADMIN_USERNAME,
             email: 'admin@lms.local',
-            passwordHash: SUPER_ADMIN_PASSWORD,
+            passwordHash: SUPER_ADMIN_PASSWORD, // Not hashed for the prototype
             firstName: 'Super',
             lastName: 'Admin',
             role: 'SUPER_ADMIN',
@@ -52,7 +52,6 @@ export class AuthService implements OnModuleInit {
         where: { username: collegeAdminUsername },
       });
       if (!collegeAdmin) {
-        // Provision default college for cekadmin
         const defaultCollege = await this.prisma.college.upsert({
           where: { code: 'CEK-001' },
           update: {},
@@ -66,7 +65,7 @@ export class AuthService implements OnModuleInit {
           data: {
             username: collegeAdminUsername,
             email: 'cekadmin@lms.local',
-            passwordHash: '123456',
+            passwordHash: '123456', // Test password
             firstName: 'College',
             lastName: 'Admin',
             role: 'COLLEGE_ADMIN',
@@ -82,7 +81,7 @@ export class AuthService implements OnModuleInit {
   }
 
   async login(username: string, password: string): Promise<LoginResponseDto> {
-    // 1. Hardcoded Super Admin check (never hits the database, fallback safety)
+    // 1. Hardcoded Super Admin check
     if (username === SUPER_ADMIN_USERNAME && password === SUPER_ADMIN_PASSWORD) {
       return {
         role: 'SUPER_ADMIN',
@@ -91,7 +90,7 @@ export class AuthService implements OnModuleInit {
       };
     }
 
-    // 2. Look up College Admin (or other roles) by username in the DB
+    // 2. Look up user by username in the DB
     const user = await this.prisma.user.findUnique({
       where: { username },
       select: {
@@ -111,7 +110,7 @@ export class AuthService implements OnModuleInit {
       throw new UnauthorizedException('Invalid credentials');
     }
 
-    // Plain-text password comparison
+    // Direct password match (since we're storing plaintext passwords for now)
     if (user.passwordHash !== password) {
       throw new UnauthorizedException('Invalid credentials');
     }
@@ -119,7 +118,7 @@ export class AuthService implements OnModuleInit {
     let collegeId = user.collegeId ?? undefined;
     let collegeName = user.college?.name ?? undefined;
 
-    // If College Admin has no college assigned (legacy user), provision one automatically
+    // Auto-provision college if College Admin has none
     if (user.role === 'COLLEGE_ADMIN' && !collegeId) {
       const cleanName = user.username ? user.username.trim() : 'Admin';
       const newCollege = await this.prisma.college.create({

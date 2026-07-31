@@ -80,11 +80,12 @@ export class BatchesService {
       where: {
         programId: data.programId,
         startYear: data.startYear,
+        name: data.name,
         deletedAt: null,
       },
     });
     if (existing) {
-      throw new BadRequestException(`A Batch already exists starting in ${data.startYear} for this Program.`);
+      throw new BadRequestException(`A Batch named "${data.name}" already exists starting in ${data.startYear} for this Program.`);
     }
 
     return this.prisma.batch.create({
@@ -223,5 +224,80 @@ export class BatchesService {
     return this.prisma.academicCalendar.delete({
       where: { id },
     });
+  }
+
+  async bulkCreateBatches(data: {
+    name: string;
+    startYear: number;
+    endYear: number;
+    status?: BatchStatus;
+    programs: {
+      programId: string;
+      schemeId: string;
+      differentiators: string[];
+    }[];
+  }, collegeId?: string) {
+    const batchesToCreate = [];
+    let count = 0;
+
+    for (const progData of data.programs) {
+      let programWhere: any = { id: progData.programId, deletedAt: null };
+      if (collegeId) {
+        programWhere.collegeId = collegeId;
+      }
+      const program = await this.prisma.program.findFirst({
+        where: programWhere,
+      });
+      if (!program) {
+        throw new BadRequestException(`Program with ID ${progData.programId} not found`);
+      }
+
+      const scheme = await this.prisma.scheme.findFirst({
+        where: { id: progData.schemeId, deletedAt: null },
+      });
+      if (!scheme) {
+        throw new BadRequestException(`Scheme with ID ${progData.schemeId} not found`);
+      }
+
+      if (scheme.programId !== progData.programId) {
+        throw new BadRequestException(`Scheme "${scheme.name}" does not belong to the Program ${program.name}.`);
+      }
+
+      for (const diff of progData.differentiators) {
+        const finalName = `${data.name} | ${program.code.split('-').pop() || program.code} | ${diff}`;
+        
+        const existing = await this.prisma.batch.findFirst({
+          where: {
+            programId: progData.programId,
+            startYear: data.startYear,
+            name: finalName,
+            deletedAt: null,
+          },
+        });
+        
+        if (existing) {
+          throw new BadRequestException(`A Batch named "${finalName}" already exists starting in ${data.startYear} for Program ${program.name}.`);
+        }
+
+        batchesToCreate.push({
+          name: finalName,
+          startYear: data.startYear,
+          endYear: data.endYear,
+          programId: progData.programId,
+          schemeId: progData.schemeId,
+          classroom: diff,
+          collegeId: program.collegeId || collegeId,
+          status: data.status || BatchStatus.ACTIVE,
+          isActive: true,
+        });
+        count++;
+      }
+    }
+
+    await this.prisma.batch.createMany({
+      data: batchesToCreate,
+    });
+
+    return { count };
   }
 }

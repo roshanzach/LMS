@@ -22,6 +22,7 @@ class CreateDepartmentDto {
 class UpdateDepartmentDto {
   name?: string;
   code?: string;
+  deletedAt?: string | null;
 }
 
 @Controller('college-admin/departments')
